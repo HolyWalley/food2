@@ -45,9 +45,28 @@ export class FoodService {
    * Get all food items
    */
   async getAllFoods(): Promise<Food[]> {
-    return await db.getAllFoods({
-      sort: [{ name: 'asc' }]
-    });
+    try {
+      console.log('Fetching all foods with type-name index');
+      // Create a simplified query that will work with our indexes
+      return await db.find<Food>(
+        {
+          type: DocumentTypes.FOOD
+        },
+        {
+          sort: [{ name: 'asc' }],
+          use_index: 'idx_type_name' // Use the named index, not the design doc ID
+        }
+      );
+    } catch (error) {
+      console.error('Error in getAllFoods:', error);
+      
+      // Fallback approach if the index query doesn't work
+      console.log('Falling back to unordered query');
+      const allFoods = await db.find<Food>({ type: DocumentTypes.FOOD }, {});
+      
+      // Sort manually in JS
+      return allFoods.sort((a, b) => a.name.localeCompare(b.name));
+    }
   }
 
   /**
@@ -70,12 +89,32 @@ export class FoodService {
    * Get food items by category
    */
   async getFoodsByCategory(category: string): Promise<Food[]> {
-    return await db.find<Food>({
-      type: DocumentTypes.FOOD,
-      category
-    }, {
-      sort: [{ name: 'asc' }]
-    });
+    try {
+      console.log(`Fetching foods by category: ${category}`);
+      // Use a simplified query with proper index
+      return await db.find<Food>(
+        {
+          type: DocumentTypes.FOOD,
+          category
+        }, 
+        {
+          sort: [{ name: 'asc' }],
+          use_index: 'idx_type_category'
+        }
+      );
+    } catch (error) {
+      console.error(`Error in getFoodsByCategory for ${category}:`, error);
+      
+      // Fallback approach
+      console.log('Falling back to unordered category filter');
+      const allFoods = await db.find<Food>({ 
+        type: DocumentTypes.FOOD,
+        category
+      }, {});
+      
+      // Sort manually in JS
+      return allFoods.sort((a, b) => a.name.localeCompare(b.name));
+    }
   }
 
   /**

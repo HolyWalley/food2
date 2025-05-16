@@ -46,9 +46,28 @@ export class RecipeService {
    * Get all recipes
    */
   async getAllRecipes(): Promise<Recipe[]> {
-    return await db.getAllRecipes({
-      sort: [{ name: 'asc' }]
-    });
+    try {
+      console.log('Fetching all recipes with type-name index');
+      // Use a simplified query with proper index
+      return await db.find<Recipe>(
+        {
+          type: DocumentTypes.RECIPE
+        },
+        {
+          sort: [{ name: 'asc' }],
+          use_index: 'idx_type_name'
+        }
+      );
+    } catch (error) {
+      console.error('Error in getAllRecipes:', error);
+      
+      // Fallback approach if the index query doesn't work
+      console.log('Falling back to unordered recipe query');
+      const allRecipes = await db.find<Recipe>({ type: DocumentTypes.RECIPE }, {});
+      
+      // Sort manually in JS
+      return allRecipes.sort((a, b) => a.name.localeCompare(b.name));
+    }
   }
 
   /**

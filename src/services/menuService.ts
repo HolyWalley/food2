@@ -47,24 +47,70 @@ export class MenuService {
    * Get all menus
    */
   async getAllMenus(): Promise<Menu[]> {
-    return await db.getAllMenus({
-      sort: [{ date: 'desc' }]
-    });
+    try {
+      console.log('Fetching all menus with type-date index');
+      // Use a simplified query with proper index
+      return await db.find<Menu>(
+        {
+          type: DocumentTypes.MENU
+        },
+        {
+          sort: [{ date: 'desc' }],
+          use_index: 'idx_type_date'
+        }
+      );
+    } catch (error) {
+      console.error('Error in getAllMenus:', error);
+      
+      // Fallback approach if the index query doesn't work
+      console.log('Falling back to unordered menu query');
+      const allMenus = await db.find<Menu>({ type: DocumentTypes.MENU }, {});
+      
+      // Sort manually in JS
+      return allMenus.sort((a, b) => {
+        // Sort by date descending
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    }
   }
 
   /**
    * Get menus by date range
    */
   async getMenusByDateRange(startDate: string, endDate: string): Promise<Menu[]> {
-    return await db.find<Menu>({
-      type: DocumentTypes.MENU,
-      date: {
-        $gte: startDate,
-        $lte: endDate
-      }
-    }, {
-      sort: [{ date: 'asc' }]
-    });
+    try {
+      console.log(`Fetching menus in date range: ${startDate} to ${endDate}`);
+      // Use a simplified query with proper index
+      return await db.find<Menu>(
+        {
+          type: DocumentTypes.MENU,
+          date: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        }, 
+        {
+          sort: [{ date: 'asc' }],
+          use_index: 'idx_type_date'
+        }
+      );
+    } catch (error) {
+      console.error(`Error in getMenusByDateRange for ${startDate} to ${endDate}:`, error);
+      
+      // Fallback approach if the index query doesn't work
+      console.log('Falling back to unordered date range query with manual filter');
+      const allMenus = await db.find<Menu>({ type: DocumentTypes.MENU }, {});
+      
+      // Filter and sort manually in JS
+      return allMenus
+        .filter(menu => {
+          return menu.date >= startDate && menu.date <= endDate;
+        })
+        .sort((a, b) => {
+          // Sort by date ascending
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+    }
   }
 
   /**

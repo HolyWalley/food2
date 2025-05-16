@@ -1,31 +1,63 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../services/foodService';
 import recipeService from '../../services/recipeService';
 import menuService from '../../services/menuService';
+import db from '../../services/db';
 import { useDatabase } from '../../contexts/DatabaseContext';
 
 const Dashboard = () => {
   const { isOnline, isSyncing } = useDatabase();
+  const [isResetting, setIsResetting] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch summary data
-  const { data: foods } = useQuery({
+  const { data: foods, error: foodError, refetch: refetchFoods } = useQuery({
     queryKey: ['foods'],
     queryFn: foodService.getAllFoods,
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
-  const { data: recipes } = useQuery({
+  const { data: recipes, error: recipeError, refetch: refetchRecipes } = useQuery({
     queryKey: ['recipes'],
     queryFn: recipeService.getAllRecipes,
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
-  const { data: menus } = useQuery({
+  const { data: menus, error: menuError, refetch: refetchMenus } = useQuery({
     queryKey: ['menus'],
     queryFn: menuService.getAllMenus,
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
+  
+  // Determine if there are any data fetching errors
+  const hasErrors = foodError || recipeError || menuError;
+  
+  // Function to reset database indexes
+  const handleResetIndexes = async () => {
+    try {
+      setIsResetting(true);
+      await db.resetIndexes();
+      
+      // Invalidate all queries to refetch data with new indexes
+      await queryClient.invalidateQueries();
+      
+      // Refetch data
+      await Promise.all([
+        refetchFoods(),
+        refetchRecipes(),
+        refetchMenus()
+      ]);
+      
+      alert('Database indexes have been reset successfully. The data should now load correctly.');
+    } catch (error) {
+      console.error('Error resetting indexes:', error);
+      alert(`Error resetting indexes: ${(error as Error).message}`);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Stats for the summary cards
   const stats = [
@@ -85,6 +117,28 @@ const Dashboard = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
+      {/* Display any data fetching errors */}
+      {hasErrors && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          <p className="mb-3">
+            {foodError && `Error loading foods: ${(foodError as Error).message}`}
+            {recipeError && `Error loading recipes: ${(recipeError as Error).message}`}
+            {menuError && `Error loading menus: ${(menuError as Error).message}`}
+          </p>
+          
+          <div className="mt-3">
+            <p className="text-gray-700 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleResetIndexes}
+              disabled={isResetting}
+            >
+              {isResetting ? 'Resetting Indexes...' : 'Reset Database Indexes'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Status bar */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
         <div className="flex items-center">
@@ -122,10 +176,19 @@ const Dashboard = () => {
             </span>
           )}
         </div>
-        <div>
-          <span className="text-sm text-gray-500">
+        <div className="flex items-center">
+          <span className="text-sm text-gray-500 mr-4">
             Last update: {new Date().toLocaleString()}
           </span>
+          {!hasErrors && (
+            <button 
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+              onClick={handleResetIndexes}
+              disabled={isResetting}
+            >
+              {isResetting ? 'Resetting...' : 'Reset DB Indexes'}
+            </button>
+          )}
         </div>
       </div>
 

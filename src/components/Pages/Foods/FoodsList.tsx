@@ -1,18 +1,38 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
+import db from '../../../services/db';
 import { type Food } from '../../../types';
 
 const FoodsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch all foods
-  const { data: foods, isLoading, error } = useQuery({
+  const { data: foods, isLoading, error, refetch } = useQuery({
     queryKey: ['foods'],
     queryFn: foodService.getAllFoods
   });
+  
+  // Function to reset database indexes
+  const handleResetIndexes = async () => {
+    try {
+      setIsResetting(true);
+      await db.resetIndexes();
+      // Invalidate queries to refetch data with new indexes
+      await queryClient.invalidateQueries({ queryKey: ['foods'] });
+      await refetch();
+      alert('Database indexes have been reset successfully. The data should now load correctly.');
+    } catch (error) {
+      console.error('Error resetting indexes:', error);
+      alert(`Error resetting indexes: ${(error as Error).message}`);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Categories for the filter dropdown
   const categories = [
@@ -75,8 +95,19 @@ const FoodsList = () => {
   // Render error state
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-        Error loading foods: {(error as Error).message}
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        <p className="mb-3">Error loading foods: {(error as Error).message}</p>
+        
+        <div className="mt-3">
+          <p className="text-gray-700 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleResetIndexes}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Resetting Indexes...' : 'Reset Database Indexes'}
+          </button>
+        </div>
       </div>
     );
   }
