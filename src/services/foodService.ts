@@ -43,7 +43,7 @@ export class FoodService {
    * Get all food items
    */
   async getAllFoods(): Promise<Food[]> {
-    return await db.getByType<Food>('food', {
+    return await db.getAllFoods({
       sort: [{ name: 'asc' }]
     });
   }

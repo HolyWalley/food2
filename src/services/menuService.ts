@@ -45,7 +45,7 @@ export class MenuService {
    * Get all menus
    */
   async getAllMenus(): Promise<Menu[]> {
-    return await db.getByType<Menu>('menu', {
+    return await db.getAllMenus({
       sort: [{ date: 'desc' }]
     });
   }

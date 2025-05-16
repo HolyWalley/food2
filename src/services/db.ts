@@ -1,9 +1,37 @@
-import PouchDB from 'pouchdb';
-import PouchDBFind from 'pouchdb-find';
-import { AppDocument } from '../types';
+// Using type-only imports to avoid runtime errors
+import type { Food, Recipe, Menu } from '../types';
 
-// Register the find plugin
-PouchDB.plugin(PouchDBFind);
+// Get the global PouchDB object that was loaded from CDN
+// Use type declaration to help TypeScript understand the global variable
+declare const PouchDB: {
+  new<T>(name: string, options?: any): PouchDB.Database<T>;
+  plugin(plugin: any): void;
+  on(eventName: string, callback: Function): void;
+  version: string;
+};
+
+// Define our own document type inline to avoid module loading issues
+interface BaseDocument {
+  _id: string;
+  _rev?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Local copy of the AppDocument type
+type AppDocument = 
+  | (BaseDocument & { type: 'food' }) 
+  | (BaseDocument & { type: 'recipe' }) 
+  | (BaseDocument & { type: 'menu' });
+
+// Document type constants
+const documentTypes = {
+  food: 'food',
+  recipe: 'recipe',
+  menu: 'menu'
+};
+
+// Using the PouchDB object from the global scope (loaded via CDN)
 
 // Define the database name
 const DB_NAME = 'food-planner';
@@ -154,6 +182,19 @@ class Database {
       { type },
       options
     );
+  }
+  
+  // Helper methods for specific document types
+  public async getAllFoods(options: PouchDB.Find.FindRequest<Food> = {}): Promise<Food[]> {
+    return this.getByType<Food>(documentTypes.food, options);
+  }
+  
+  public async getAllRecipes(options: PouchDB.Find.FindRequest<Recipe> = {}): Promise<Recipe[]> {
+    return this.getByType<Recipe>(documentTypes.recipe, options);
+  }
+  
+  public async getAllMenus(options: PouchDB.Find.FindRequest<Menu> = {}): Promise<Menu[]> {
+    return this.getByType<Menu>(documentTypes.menu, options);
   }
 
   // Get database information

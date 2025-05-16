@@ -44,7 +44,7 @@ export class RecipeService {
    * Get all recipes
    */
   async getAllRecipes(): Promise<Recipe[]> {
-    return await db.getByType<Recipe>('recipe', {
+    return await db.getAllRecipes({
       sort: [{ name: 'asc' }]
     });
   }

@@ -7,6 +7,13 @@
     <title>Food Planning App</title>
     <!-- Google Fonts for Material Icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <!-- PouchDB from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.find.min.js"></script>
+    <script>
+      // Make PouchDB available globally
+      window.PouchDB = PouchDB;
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,3 +1,4 @@
+// Base document interface for shared properties
 export interface BaseDocument {
   _id: string;
   _rev?: string;
@@ -5,6 +6,7 @@ export interface BaseDocument {
   updatedAt: string;
 }
 
+// Information about nutritional content
 export interface NutritionInfo {
   calories: number;
   protein: number;  // grams
@@ -18,11 +20,13 @@ export interface NutritionInfo {
   minerals?: Record<string, number>; // Optional detailed mineral information
 }
 
+// Information about serving size
 export interface ServingInfo {
   size: number;
   unit: string;
 }
 
+// Food item document
 export interface Food extends BaseDocument {
   type: 'food';
   name: string;
@@ -33,12 +37,14 @@ export interface Food extends BaseDocument {
   tags?: string[];
 }
 
+// Recipe ingredient
 export interface RecipeIngredient {
   foodId: string;
   quantity: number;
   unit: string;
 }
 
+// Recipe document
 export interface Recipe extends BaseDocument {
   type: 'recipe';
   name: string;
@@ -52,12 +58,14 @@ export interface Recipe extends BaseDocument {
   imageUrl?: string;
 }
 
+// Menu item (reference to a food or recipe)
 export interface MenuItem {
   type: 'food' | 'recipe';
   itemId: string;
   portions: number;
 }
 
+// Menu document
 export interface Menu extends BaseDocument {
   type: 'menu';
   name: string;
@@ -67,4 +75,5 @@ export interface Menu extends BaseDocument {
   tags?: string[];
 }
 
+// Type for any document stored in the database
 export type AppDocument = Food | Recipe | Menu;
