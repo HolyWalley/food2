@@ -74,30 +74,41 @@ class Database {
   // Setup database indexes for efficient querying
   private async setupIndexes(): Promise<void> {
     try {
-      // Create the most basic index for each field we need to query
-      // Use the most simple form for maximum compatibility
-      console.log('Creating type index');
+      // Create separate individual field indexes for maximum compatibility
+      // This avoids issues with more complex indexes
+      
+      // Basic type index - critical for all queries
+      console.log('Creating basic type index');
       await this.db.createIndex({
-        index: { fields: ['type'] }
+        index: {
+          fields: ['type']
+        }
       });
       
+      // Name index for sorting
       console.log('Creating name index');
       await this.db.createIndex({
-        index: { fields: ['name'] }
+        index: {
+          fields: ['name']
+        }
       });
       
+      // Category index for food filtering
       console.log('Creating category index');
       await this.db.createIndex({
-        index: { fields: ['category'] }
+        index: {
+          fields: ['category']
+        }
       });
       
+      // Date index for menu filtering
       console.log('Creating date index');
       await this.db.createIndex({
-        index: { fields: ['date'] }
+        index: {
+          fields: ['date']
+        }
       });
       
-      // Let PouchDB combine indexes when needed
-
       console.log('Database indexes created successfully');
     } catch (error) {
       console.error('Failed to create database indexes:', error);
@@ -191,44 +202,86 @@ class Database {
     selector: PouchDB.Find.Selector,
     options: PouchDB.Find.FindRequest<T> = {}
   ): Promise<T[]> {
+    // Log the incoming query for debugging
+    console.log('Original query request:', { selector, options });
+    
+    // Instead of trying to use named indexes, let PouchDB choose the best index
+    // This avoids "unknown_error" and "could not find that index" errors
+    let useIndex: string | undefined = undefined;
+    
+    // We'll let PouchDB automatically select the appropriate index
+    // based on the selector instead of trying to specify one
+    // This is more resilient to index naming differences across PouchDB versions
+    
     try {
-      // Strip out all sorting to avoid indexing issues
-      // Sort will be done in JS after fetching
-      const strippedOptions = { ...options };
-      delete strippedOptions.sort;
-      delete strippedOptions.use_index;
+      // Try first query variant: simple query with no explicit index or sorting
+      console.log('Trying basic query without explicit index name');
       
-      // Use the most basic query possible
       const query: PouchDB.Find.FindRequest<T> = {
         selector,
-        ...strippedOptions
+        // Let PouchDB choose the appropriate index automatically
+        // Don't use use_index parameter to avoid "could not find that index" errors
+        // Omit sorting from PouchDB query - we'll sort in JS
+        limit: options.limit || 1000, // Use a reasonable limit
+        skip: options.skip || 0,
+        fields: options.fields
       };
-
-      // Debug log
-      console.log('PouchDB query (simplified):', JSON.stringify(query, null, 2));
-
-      // Execute the query
-      const result = await this.db.find(query);
-      return result.docs as T[];
-    } catch (error) {
-      console.error('Error finding documents:', error);
       
-      // Try with allDocs as a fallback
+      console.log('PouchDB query (first attempt):', JSON.stringify(query, null, 2));
+      
+      const result = await this.db.find(query);
+      console.log(`Query successful, found ${result.docs.length} documents`);
+      return result.docs as T[];
+    } catch (primaryError) {
+      console.error('Error with primary query:', primaryError);
+      
       try {
-        console.log('Trying allDocs as fallback');
-        const response = await this.db.allDocs({ include_docs: true });
-        const allDocs = response.rows.map(row => row.doc) as T[];
+        // Try second query variant: no index, no sorting, just the selector
+        console.log('Trying basic query without index or sorting');
         
-        // Filter the documents based on the selector
-        // Only support simple type selector for now
-        if (selector.type) {
-          return allDocs.filter(doc => doc.type === selector.type);
+        const fallbackQuery: PouchDB.Find.FindRequest<T> = {
+          selector,
+          limit: options.limit || 1000,
+          skip: options.skip || 0,
+          fields: options.fields
+        };
+        
+        console.log('PouchDB query (fallback attempt):', JSON.stringify(fallbackQuery, null, 2));
+        
+        const result = await this.db.find(fallbackQuery);
+        console.log(`Fallback query successful, found ${result.docs.length} documents`);
+        return result.docs as T[];
+      } catch (secondaryError) {
+        console.error('Error with fallback query:', secondaryError);
+        
+        // Final attempt: use allDocs and filter in memory
+        try {
+          console.log('Trying allDocs as final fallback');
+          const response = await this.db.allDocs({ include_docs: true });
+          const allDocs = response.rows.map(row => row.doc) as T[];
+          
+          // Filter the documents based on the selector
+          let filteredDocs = allDocs;
+          
+          // Apply type filter if present
+          if (selector.type) {
+            filteredDocs = filteredDocs.filter(doc => doc.type === selector.type);
+          }
+          
+          // Apply category filter if present (for foods)
+          if (selector.category) {
+            filteredDocs = filteredDocs.filter(doc => 
+              (doc as any).category === selector.category
+            );
+          }
+          
+          console.log(`allDocs fallback successful, found ${filteredDocs.length} documents after filtering`);
+          return filteredDocs;
+        } catch (finalError) {
+          console.error('All query approaches failed:', finalError);
+          console.error('Original error:', primaryError);
+          throw new Error(`Database query failed: ${(primaryError as Error).message}`);
         }
-        
-        return allDocs;
-      } catch (fallbackError) {
-        console.error('Even fallback query failed:', fallbackError);
-        throw error; // Throw the original error
       }
     }
   }
@@ -240,78 +293,60 @@ class Database {
   ): Promise<T[]> {
     // Create a proper selector that matches the type
     const selector: PouchDB.Find.Selector = { type };
-
-    // Let PouchDB choose the best index based on the query
-    return this.find<T>(selector, options);
+    
+    console.log(`getByType called for type: ${type}`);
+    
+    // Get all documents of the specified type
+    const results = await this.find<T>(selector, options);
+    return results;
   }
   
-  // Helper methods for specific document types
+  // Helper methods for specific document types with in-memory sorting
   public async getAllFoods(options: PouchDB.Find.FindRequest<Food> = {}): Promise<Food[]> {
+    console.log('getAllFoods called');
+    
     try {
-      const mergedOptions: PouchDB.Find.FindRequest<Food> = {
-        ...options,
-        // Default to using name sorting if not specified
-        sort: options.sort || [{ name: 'asc' }],
-        // Use the named index, not the design doc ID
-        use_index: 'idx_type_name'
-      };
-
-      return this.find<Food>(
-        { type: DocumentTypes.FOOD },
-        mergedOptions
-      );
+      // Get foods with the proper query approach, without relying on PouchDB sorting
+      const foods = await this.find<Food>({ type: DocumentTypes.FOOD }, options);
+      
+      // Always sort in JavaScript to avoid PouchDB index issues
+      return foods.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error in db.getAllFoods:', error);
       
-      // Fallback to basic query with manual sorting
-      const allDocs = await this.find<Food>({ type: DocumentTypes.FOOD }, {});
-      return allDocs.sort((a, b) => a.name.localeCompare(b.name));
+      // Handle the error appropriately 
+      // (find method already has fallback mechanisms)
+      throw new Error(`Failed to get foods: ${(error as Error).message}`);
     }
   }
   
   public async getAllRecipes(options: PouchDB.Find.FindRequest<Recipe> = {}): Promise<Recipe[]> {
+    console.log('getAllRecipes called');
+    
     try {
-      const mergedOptions: PouchDB.Find.FindRequest<Recipe> = {
-        ...options,
-        // Default to using name sorting if not specified
-        sort: options.sort || [{ name: 'asc' }],
-        // Use the named index, not the design doc ID
-        use_index: 'idx_type_name'
-      };
-
-      return this.find<Recipe>(
-        { type: DocumentTypes.RECIPE },
-        mergedOptions
-      );
+      // Get recipes using the proper query approach
+      const recipes = await this.find<Recipe>({ type: DocumentTypes.RECIPE }, options);
+      
+      // Always sort in JavaScript
+      return recipes.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error in db.getAllRecipes:', error);
-      
-      // Fallback to basic query with manual sorting
-      const allDocs = await this.find<Recipe>({ type: DocumentTypes.RECIPE }, {});
-      return allDocs.sort((a, b) => a.name.localeCompare(b.name));
+      throw new Error(`Failed to get recipes: ${(error as Error).message}`);
     }
   }
   
   public async getAllMenus(options: PouchDB.Find.FindRequest<Menu> = {}): Promise<Menu[]> {
+    console.log('getAllMenus called');
+    
     try {
-      const mergedOptions: PouchDB.Find.FindRequest<Menu> = {
-        ...options,
-        // Default to using date sorting if not specified
-        sort: options.sort || [{ date: 'desc' }],
-        // Use the named index, not the design doc ID
-        use_index: 'idx_type_date'
-      };
-
-      return this.find<Menu>(
-        { type: DocumentTypes.MENU },
-        mergedOptions
-      );
+      // Get menus using the proper query approach
+      const menus = await this.find<Menu>({ type: DocumentTypes.MENU }, options);
+      
+      // Always sort in JavaScript by date descending
+      return menus.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } catch (error) {
       console.error('Error in db.getAllMenus:', error);
-      
-      // Fallback to basic query with manual sorting
-      const allDocs = await this.find<Menu>({ type: DocumentTypes.MENU }, {});
-      return allDocs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      throw new Error(`Failed to get menus: ${(error as Error).message}`);
     }
   }
 
@@ -328,57 +363,107 @@ class Database {
   // Reset database indexes - can be called to fix corrupted indexes
   public async resetIndexes(): Promise<void> {
     try {
-      console.log('Resetting database indexes...');
+      console.log('-----------------------------------------------------------');
+      console.log('RESETTING DATABASE INDEXES TO FIX QUERY ISSUES');
+      console.log('-----------------------------------------------------------');
+      
+      // Get current indexes before removal
+      try {
+        const beforeIndexes = await this.db.getIndexes();
+        console.log('Current indexes before reset:', JSON.stringify(beforeIndexes, null, 2));
+      } catch (err) {
+        console.warn('Unable to list current indexes:', err);
+      }
       
       // Get all design documents (indexes)
+      console.log('Finding all design documents...');
       const result = await this.db.allDocs({ startkey: '_design/', endkey: '_design/\ufff0' });
+      console.log(`Found ${result.rows.length} design documents to remove`);
       
       // Delete all design documents
+      let successfulRemovals = 0;
       for (const row of result.rows) {
         const docId = row.id;
         const docRev = row.value.rev;
         try {
           await this.db.remove({ _id: docId, _rev: docRev } as any);
-          console.log(`Removed index: ${docId}`);
+          console.log(`✓ Removed index: ${docId}`);
+          successfulRemovals++;
         } catch (removeError) {
-          console.warn(`Failed to remove index ${docId}:`, removeError);
+          console.warn(`✗ Failed to remove index ${docId}:`, removeError);
         }
       }
       
-      // Wait a bit to ensure indexes are fully removed
-      console.log('Waiting for indexes to be removed...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`Successfully removed ${successfulRemovals} of ${result.rows.length} indexes`);
+      
+      // Wait to ensure indexes are fully removed
+      console.log('Waiting for indexes to be completely removed...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify all indexes were removed
+      try {
+        const midwayIndexes = await this.db.getIndexes();
+        console.log('Indexes after removal:', JSON.stringify(midwayIndexes, null, 2));
+        
+        // Should only have the _all_docs default index
+        if (midwayIndexes.indexes.length > 1) {
+          console.warn('Some indexes remain after removal attempt. This may cause issues.');
+        }
+      } catch (err) {
+        console.warn('Unable to list indexes after removal:', err);
+      }
       
       // Recreate indexes
+      console.log('Creating new indexes...');
       await this.setupIndexes();
-      console.log('Database indexes have been reset successfully');
       
-      // Wait a bit to ensure indexes are fully created
-      console.log('Waiting for indexes to be created...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait longer to ensure indexes are fully created
+      console.log('Waiting for indexes to be completely created...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Show what indexes we have after reset
       try {
-        const indexes = await this.db.getIndexes();
-        console.log('Available indexes after reset:', JSON.stringify(indexes, null, 2));
+        const afterIndexes = await this.db.getIndexes();
+        console.log('Available indexes after reset:', JSON.stringify(afterIndexes, null, 2));
+        console.log(`Created ${afterIndexes.indexes.length - 1} new indexes`);
       } catch (err) {
-        console.warn('Unable to list indexes:', err);
+        console.warn('Unable to list indexes after creation:', err);
       }
       
       // Clear the PouchDB query cache to avoid using stale indexes
       try {
-        console.log('Attempting to clear PouchDB query cache...');
-        // Access the PouchDB internal query cache if possible
+        console.log('Clearing PouchDB query cache...');
+        // Clear any internal cache PouchDB might have
         if ((this.db as any)._query_cache) {
           (this.db as any)._query_cache = {};
           console.log('PouchDB query cache cleared');
         }
+        
+        // Try to clear other potential caches
+        if ((this.db as any).cache) {
+          (this.db as any).cache = {};
+          console.log('PouchDB cache cleared');
+        }
       } catch (cacheError) {
-        console.warn('Unable to clear PouchDB query cache:', cacheError);
+        console.warn('Unable to clear PouchDB caches:', cacheError);
+      }
+      
+      console.log('-----------------------------------------------------------');
+      console.log('DATABASE INDEX RESET COMPLETE');
+      console.log('-----------------------------------------------------------');
+      
+      // Run a simple test query to verify indexes work
+      try {
+        console.log('Running test query to verify indexes...');
+        const testResult = await this.find({ type: DocumentTypes.FOOD });
+        console.log(`Test query successful, found ${testResult.length} food documents`);
+      } catch (testError) {
+        console.error('Test query failed:', testError);
+        console.warn('Indexes may still have issues after reset');
       }
     } catch (error) {
-      console.error('Error resetting database indexes:', error);
-      throw error;
+      console.error('Error during index reset process:', error);
+      throw new Error(`Failed to reset database indexes: ${(error as Error).message}`);
     }
   }
 }

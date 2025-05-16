@@ -46,38 +46,18 @@ export class RecipeService {
    * Get all recipes
    */
   async getAllRecipes(): Promise<Recipe[]> {
+    console.log('RecipeService.getAllRecipes called');
+    
     try {
-      console.log('Fetching all recipes with basic query');
-      // Use the most basic query possible
-      const result = await db.find<Recipe>(
-        {
-          type: DocumentTypes.RECIPE
-        },
-        {
-          // No sorting, no index specification
-        }
-      );
-      
-      // Sort in JavaScript
-      return result.sort((a, b) => a.name.localeCompare(b.name));
+      // Use the Database class's dedicated method for getting recipes
+      return await db.getAllRecipes();
     } catch (error) {
-      console.error('Error in getAllRecipes:', error);
+      console.error('Error in RecipeService.getAllRecipes:', error);
       
-      // Fallback to allDocs approach
-      try {
-        console.log('Trying with allDocs as fallback');
-        // Use allDocs to get everything, then filter in JS
-        const response = await (db as any).db.allDocs({ include_docs: true });
-        const allDocs = response.rows.map(row => row.doc);
-        
-        // Filter for recipe documents and sort by name
-        return allDocs
-          .filter(doc => doc.type === DocumentTypes.RECIPE)
-          .sort((a, b) => a.name.localeCompare(b.name));
-      } catch (fallbackError) {
-        console.error('Final fallback error:', fallbackError);
-        return []; // Return empty array as last resort
-      }
+      // Since the db.ts methods already have fallbacks,
+      // we should rarely get to this point, but we'll handle it anyway
+      console.warn('Returning empty recipe array as last resort');
+      return [];
     }
   }
 

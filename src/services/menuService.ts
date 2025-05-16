@@ -47,41 +47,18 @@ export class MenuService {
    * Get all menus
    */
   async getAllMenus(): Promise<Menu[]> {
+    console.log('MenuService.getAllMenus called');
+    
     try {
-      console.log('Fetching all menus with basic query');
-      // Use the most basic query possible
-      const result = await db.find<Menu>(
-        {
-          type: DocumentTypes.MENU
-        },
-        {
-          // No sorting, no index specification
-        }
-      );
-      
-      // Sort in JavaScript instead of PouchDB
-      return result.sort((a, b) => {
-        // Sort by date descending
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
+      // Use the Database class's dedicated method for getting menus
+      return await db.getAllMenus();
     } catch (error) {
-      console.error('Error in getAllMenus:', error);
+      console.error('Error in MenuService.getAllMenus:', error);
       
-      // Fallback to allDocs approach
-      try {
-        console.log('Trying with allDocs as fallback');
-        // Use allDocs to get everything, then filter in JS
-        const response = await (db as any).db.allDocs({ include_docs: true });
-        const allDocs = response.rows.map(row => row.doc);
-        
-        // Filter for menu documents and sort by date
-        return allDocs
-          .filter(doc => doc.type === DocumentTypes.MENU)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      } catch (fallbackError) {
-        console.error('Final fallback error:', fallbackError);
-        return []; // Return empty array as last resort
-      }
+      // Since the db.ts methods already have fallbacks,
+      // we should rarely get to this point, but we'll handle it anyway
+      console.warn('Returning empty menu array as last resort');
+      return [];
     }
   }
 
@@ -89,36 +66,21 @@ export class MenuService {
    * Get menus by date range
    */
   async getMenusByDateRange(startDate: string, endDate: string): Promise<Menu[]> {
+    console.log(`MenuService.getMenusByDateRange called: ${startDate} to ${endDate}`);
+    
     try {
-      console.log(`Fetching menus in date range: ${startDate} to ${endDate}`);
-      
-      // First try getting all menus and filtering in JS
+      // For date range queries, using an in-memory approach is more reliable
+      // First get all menus
       const allMenus = await this.getAllMenus();
       
-      // Filter for the date range and sort
+      // Then filter by date range and sort chronologically (ascending)
       return allMenus
         .filter(menu => menu.date >= startDate && menu.date <= endDate)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     } catch (error) {
       console.error(`Error in getMenusByDateRange for ${startDate} to ${endDate}:`, error);
-      
-      // Final fallback with allDocs if needed
-      try {
-        console.log('Trying with allDocs as fallback for date range');
-        const response = await (db as any).db.allDocs({ include_docs: true });
-        const allDocs = response.rows.map(row => row.doc);
-        
-        return allDocs
-          .filter(doc => 
-            doc.type === DocumentTypes.MENU && 
-            doc.date >= startDate && 
-            doc.date <= endDate
-          )
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      } catch (fallbackError) {
-        console.error('Final fallback error:', fallbackError);
-        return []; // Return empty array as last resort
-      }
+      console.warn('Returning empty array as last resort');
+      return [];
     }
   }
 
