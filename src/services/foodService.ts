@@ -112,49 +112,72 @@ export class FoodService {
    * Calculate nutrition for a quantity of food
    */
   calculateNutrition(food: Food, quantity: number, unit: string): NutritionInfo {
+    console.log(`Calculating nutrition for ${quantity} ${unit} of ${food.name}`);
+    
     // Convert quantity to the same unit as the serving size if needed
-    const conversionFactor = this.convertUnit(quantity, unit, food.serving);
+    let conversionFactor = this.convertUnit(quantity, unit, food.serving);
+    console.log(`Conversion factor: ${conversionFactor} (${quantity} ${unit} relative to ${food.serving.size} ${food.serving.unit})`);
+    
+    if (isNaN(conversionFactor) || conversionFactor <= 0) {
+      console.error(`Invalid conversion factor: ${conversionFactor}. Using 1 instead.`);
+      // Fallback to a safe value if conversion fails
+      conversionFactor = 1;
+    }
     
     // Calculate the nutritional values based on the quantity
     const result: NutritionInfo = {
-      calories: food.nutrients.calories * conversionFactor,
-      protein: food.nutrients.protein * conversionFactor,
-      carbs: food.nutrients.carbs * conversionFactor,
-      fat: food.nutrients.fat * conversionFactor,
+      calories: Math.round((food.nutrients.calories * conversionFactor) * 100) / 100,
+      protein: Math.round((food.nutrients.protein * conversionFactor) * 100) / 100,
+      carbs: Math.round((food.nutrients.carbs * conversionFactor) * 100) / 100,
+      fat: Math.round((food.nutrients.fat * conversionFactor) * 100) / 100,
     };
+    
+    console.log(`Base nutrition calculation:
+      - Original calories: ${food.nutrients.calories} × ${conversionFactor} = ${result.calories}
+      - Original protein: ${food.nutrients.protein}g × ${conversionFactor} = ${result.protein}g
+      - Original carbs: ${food.nutrients.carbs}g × ${conversionFactor} = ${result.carbs}g
+      - Original fat: ${food.nutrients.fat}g × ${conversionFactor} = ${result.fat}g
+    `);
     
     // Add optional nutrients if they exist
     if (food.nutrients.fiber !== undefined) {
-      result.fiber = food.nutrients.fiber * conversionFactor;
+      result.fiber = Math.round((food.nutrients.fiber * conversionFactor) * 100) / 100;
+      console.log(`Fiber: ${food.nutrients.fiber}g × ${conversionFactor} = ${result.fiber}g`);
     }
     
     if (food.nutrients.sugar !== undefined) {
-      result.sugar = food.nutrients.sugar * conversionFactor;
+      result.sugar = Math.round((food.nutrients.sugar * conversionFactor) * 100) / 100;
+      console.log(`Sugar: ${food.nutrients.sugar}g × ${conversionFactor} = ${result.sugar}g`);
     }
     
     if (food.nutrients.sodium !== undefined) {
-      result.sodium = food.nutrients.sodium * conversionFactor;
+      result.sodium = Math.round((food.nutrients.sodium * conversionFactor) * 100) / 100;
+      console.log(`Sodium: ${food.nutrients.sodium}mg × ${conversionFactor} = ${result.sodium}mg`);
     }
     
     if (food.nutrients.cholesterol !== undefined) {
-      result.cholesterol = food.nutrients.cholesterol * conversionFactor;
+      result.cholesterol = Math.round((food.nutrients.cholesterol * conversionFactor) * 100) / 100;
+      console.log(`Cholesterol: ${food.nutrients.cholesterol}mg × ${conversionFactor} = ${result.cholesterol}mg`);
     }
     
     // Process vitamins and minerals if they exist
     if (food.nutrients.vitamins) {
       result.vitamins = {};
       for (const [vitamin, value] of Object.entries(food.nutrients.vitamins)) {
-        result.vitamins[vitamin] = value * conversionFactor;
+        result.vitamins[vitamin] = Math.round((value * conversionFactor) * 100) / 100;
+        console.log(`Vitamin ${vitamin}: ${value} × ${conversionFactor} = ${result.vitamins[vitamin]}`);
       }
     }
     
     if (food.nutrients.minerals) {
       result.minerals = {};
       for (const [mineral, value] of Object.entries(food.nutrients.minerals)) {
-        result.minerals[mineral] = value * conversionFactor;
+        result.minerals[mineral] = Math.round((value * conversionFactor) * 100) / 100;
+        console.log(`Mineral ${mineral}: ${value} × ${conversionFactor} = ${result.minerals[mineral]}`);
       }
     }
     
+    console.log(`Final calculated nutrition for ${quantity} ${unit} of ${food.name}:`, result);
     return result;
   }
 
@@ -162,9 +185,13 @@ export class FoodService {
    * Convert between different units of measurement
    */
   private convertUnit(quantity: number, unit: string, serving: ServingInfo): number {
+    console.log(`Converting ${quantity} ${unit} to ${serving.size} ${serving.unit}`);
+    
     // If the units are the same, just calculate the ratio
     if (unit.toLowerCase() === serving.unit.toLowerCase()) {
-      return quantity / serving.size;
+      const ratio = quantity / serving.size;
+      console.log(`Same units: ${unit} = ${serving.unit}, ratio: ${ratio}`);
+      return ratio;
     }
 
     // Handle common unit conversions
@@ -188,22 +215,51 @@ export class FoodService {
       'tsp': { 'ml': 4.92892, 'l': 0.00492892, 'cup': 0.0208333, 'tbsp': 0.333333 }
     };
 
-    // Check if we have a conversion for the units
+    // Special handling for "medium", "small", "large" units for foods like fruits and vegetables
+    const sizeMappings: Record<string, Record<string, number>> = {
+      // General size to weight (g) conversion for common foods
+      'medium': { 'g': 1 },  // Will be treated as 1x the serving size
+      'small': { 'g': 0.7 }, // Will be treated as 0.7x the serving size
+      'large': { 'g': 1.3 }, // Will be treated as 1.3x the serving size
+      'clove': { 'g': 1 },   // Clove of garlic will be treated as 1x the serving size
+    };
+
+    // Check if we're converting from a size descriptor (e.g., "medium", "clove") to a weight
+    if (sizeMappings[fromUnit]) {
+      console.log(`Converting from size descriptor '${fromUnit}' to ${toUnit}`);
+      // For size descriptors, we treat them as multiples of the serving size
+      const multiplier = sizeMappings[fromUnit]['g'];
+      
+      // The result will be a multiplier of the serving size
+      console.log(`Size conversion: ${quantity} ${fromUnit} = ${quantity * multiplier} serving(s)`);
+      return quantity * multiplier;
+    }
+
+    // Regular unit conversions
     if (weightConversions[fromUnit] && weightConversions[fromUnit][toUnit]) {
       // Convert to the target unit
       const converted = quantity * weightConversions[fromUnit][toUnit];
       // Return the ratio with the serving size
-      return converted / serving.size;
+      const ratio = converted / serving.size;
+      console.log(`Weight conversion: ${quantity} ${fromUnit} = ${converted} ${toUnit}, ratio: ${ratio}`);
+      return ratio;
     }
 
     if (volumeConversions[fromUnit] && volumeConversions[fromUnit][toUnit]) {
       const converted = quantity * volumeConversions[fromUnit][toUnit];
-      return converted / serving.size;
+      const ratio = converted / serving.size;
+      console.log(`Volume conversion: ${quantity} ${fromUnit} = ${converted} ${toUnit}, ratio: ${ratio}`);
+      return ratio;
     }
 
-    // If we don't have a conversion, assume they're compatible and return the ratio
+    // Handle cross-conversions between weight and volume for common ingredients
+    // This is a simplification - in reality, density varies by ingredient
+    
+    // If we don't have a direct conversion, we need a more sophisticated approach
     console.warn(`No conversion found from ${fromUnit} to ${toUnit}. Assuming direct ratio.`);
-    return quantity / serving.size;
+    const ratio = quantity / serving.size; 
+    console.log(`No conversion available, using direct ratio: ${ratio}`);
+    return ratio;
   }
 }
 

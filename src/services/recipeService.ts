@@ -80,6 +80,8 @@ export class RecipeService {
    * Calculate the nutritional information for a recipe
    */
   async calculateRecipeNutrition(recipe: Recipe): Promise<NutritionInfo> {
+    console.log('Calculating nutrition for recipe:', recipe.name);
+    
     // Initialize the nutrition object with zeros
     const nutrition: NutritionInfo = {
       calories: 0,
@@ -94,11 +96,28 @@ export class RecipeService {
       minerals: {}
     };
     
+    console.log('Recipe ingredients:', JSON.stringify(recipe.ingredients, null, 2));
+    
+    if (!recipe.ingredients || recipe.ingredients.length === 0) {
+      console.warn('Recipe has no ingredients!');
+      return nutrition;
+    }
+    
     // Fetch and calculate nutrition for each ingredient
     for (const ingredient of recipe.ingredients) {
       try {
+        if (!ingredient.foodId) {
+          console.error('Ingredient missing foodId:', ingredient);
+          continue;
+        }
+        
+        console.log(`Processing ingredient: ${ingredient.quantity} ${ingredient.unit} of food ID ${ingredient.foodId}`);
+        
         // Get the food item
         const food = await foodService.getFoodById(ingredient.foodId);
+        console.log('Found food:', food.name);
+        console.log('Food serving:', JSON.stringify(food.serving));
+        console.log('Food nutrients:', JSON.stringify(food.nutrients));
         
         // Calculate nutrition for this ingredient
         const ingredientNutrition = foodService.calculateNutrition(
@@ -107,11 +126,15 @@ export class RecipeService {
           ingredient.unit
         );
         
+        console.log(`Nutrition for ${food.name} (${ingredient.quantity} ${ingredient.unit}):`, JSON.stringify(ingredientNutrition, null, 2));
+        
         // Add to the total
-        nutrition.calories += ingredientNutrition.calories;
-        nutrition.protein += ingredientNutrition.protein;
-        nutrition.carbs += ingredientNutrition.carbs;
-        nutrition.fat += ingredientNutrition.fat;
+        nutrition.calories += ingredientNutrition.calories || 0;
+        nutrition.protein += ingredientNutrition.protein || 0;
+        nutrition.carbs += ingredientNutrition.carbs || 0;
+        nutrition.fat += ingredientNutrition.fat || 0;
+        
+        console.log(`Running total - Calories: ${nutrition.calories}, Protein: ${nutrition.protein}g, Carbs: ${nutrition.carbs}g, Fat: ${nutrition.fat}g`);
         
         // Add optional nutrients if they exist
         if (ingredientNutrition.fiber) {
@@ -156,6 +179,7 @@ export class RecipeService {
     if (Object.keys(nutrition.vitamins!).length === 0) delete nutrition.vitamins;
     if (Object.keys(nutrition.minerals!).length === 0) delete nutrition.minerals;
     
+    console.log('Final recipe nutrition:', JSON.stringify(nutrition, null, 2));
     return nutrition;
   }
 
