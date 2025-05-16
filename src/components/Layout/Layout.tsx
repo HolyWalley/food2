@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
+import ViewTransitionsInfo from './ViewTransitionsInfo';
 import { useDatabase } from '../../contexts/DatabaseContext';
 
 const Layout = () => {
@@ -31,6 +32,7 @@ const Layout = () => {
       </div>
       
       <StatusBar />
+      <ViewTransitionsInfo />
     </div>
   );
 };

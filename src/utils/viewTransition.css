@@ -1,0 +1,81 @@
+/**
+ * View Transitions API specific styles
+ */
+
+/* Apply view transition styles when available */
+@supports (view-transition-name: none) {
+  /* Make the main transition slower to see the morph effect */
+  ::view-transition-group(root) {
+    animation-duration: 500ms;
+  }
+  
+  /* This sets up smoother easing for all transitions */
+  ::view-transition-group(*) {
+    animation-timing-function: cubic-bezier(0.35, 0.1, 0.25, 1); /* Custom easing for a nicer feel */
+  }
+
+  /* Let the card container morph naturally without custom animations */
+  ::view-transition-old(food-card-container-*),
+  ::view-transition-new(food-card-container-*) {
+    /* Allow this element to fully morph from one state to another */
+    /* No custom animations - the browser will automatically morph the shape */
+    height: 100%;
+    width: 100%;
+    transform-origin: center;
+  }
+  
+  /* When transitioning to detail view (the new is the details page) */
+  ::view-transition-new(food-card-container-*) {
+    /* Special handling for expansion */
+    overflow: hidden;
+    border-radius: 0.5rem; /* Match the card's border radius */
+  }
+  
+  /* Let the content within the card morph naturally */
+  ::view-transition-old(food-title-*),
+  ::view-transition-new(food-title-*),
+  ::view-transition-old(food-category-*),
+  ::view-transition-new(food-category-*),
+  ::view-transition-old(food-nutrients-*),
+  ::view-transition-new(food-nutrients-*),
+  ::view-transition-old(food-serving-*),
+  ::view-transition-new(food-serving-*),
+  ::view-transition-old(food-tags-*),
+  ::view-transition-new(food-tags-*) {
+    /* Allow these elements to naturally morph */
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Special handling for the cards-to-detail transition */
+  html::view-transition-group(root) {
+    animation-duration: 450ms;
+  }
+  
+  /* Adjust the animation speed based on direction */
+  html[data-direction="food-to-details"] ::view-transition-group(root) {
+    animation-duration: 500ms; /* Slightly slower for expansion */
+  }
+  
+  html[data-direction="details-to-food"] ::view-transition-group(root) {
+    animation-duration: 400ms; /* Slightly faster for collapse */
+  }
+}
+
+/* Helper class to visually identify elements with view transitions */
+.has-view-transition {
+  position: relative;
+}
+
+/* Add a subtle "shimmer" effect during hover to hint that the card is clickable and has transitions */
+.food-card-hover-effect:hover {
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* These styles make the body not scrollable during transitions */
+.disable-scroll {
+  overflow: hidden;
+  height: 100vh;
+}

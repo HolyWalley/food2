@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
 import db from '../../../services/db';
 import { type Food } from '../../../types';
+import { withViewTransition } from '../../../utils/viewTransition';
 
 const FoodsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -156,7 +157,7 @@ const FoodsList = () => {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="food-cards-container">
           {filteredFoods?.map(food => (
             <FoodCard key={food._id} food={food} />
           ))}
@@ -168,20 +169,43 @@ const FoodsList = () => {
 
 // Food card component
 const FoodCard = ({ food }: { food: Food }) => {
+  const navigate = useNavigate();
+  
+  // Handle click with view transition
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await withViewTransition(() => {
+      navigate(`/foods/${food._id}`);
+    }, 'food-to-details');
+  };
+  
   return (
     <Link
       to={`/foods/${food._id}`}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+      onClick={handleClick}
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden food-card-hover-effect has-view-transition"
+      style={{ viewTransitionName: `food-card-container-${food._id}` }}
     >
       <div className="p-6">
         <div className="flex justify-between items-start">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">{food.name}</h2>
-          <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded">
+          <h2 
+            className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100"
+            style={{ viewTransitionName: `food-title-${food._id}` }}
+          >
+            {food.name}
+          </h2>
+          <span 
+            className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded"
+            style={{ viewTransitionName: `food-category-${food._id}` }}
+          >
             {food.category}
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <div 
+          className="mt-4 grid grid-cols-2 gap-2 text-sm"
+          style={{ viewTransitionName: `food-nutrients-${food._id}` }}
+        >
           <div className="flex flex-col">
             <span className="text-gray-500 dark:text-gray-400">Calories</span>
             <span className="font-medium dark:text-white">{food.nutrients.calories} kcal</span>
@@ -200,14 +224,20 @@ const FoodCard = ({ food }: { food: Food }) => {
           </div>
         </div>
 
-        <div className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400">
+        <div 
+          className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400"
+          style={{ viewTransitionName: `food-serving-${food._id}` }}
+        >
           <span>
             Serving: {food.serving.size} {food.serving.unit}
           </span>
         </div>
 
         {food.tags && food.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1">
+          <div 
+            className="mt-4 flex flex-wrap gap-1"
+            style={{ viewTransitionName: `food-tags-${food._id}` }}
+          >
             {food.tags.map(tag => (
               <span
                 key={tag}
