@@ -195,23 +195,23 @@ const FoodForm = () => {
 
   if (isEditMode && isLoading) {
     return (
-      <div className="card animate-pulse p-8">
-        <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-        <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+      <div className="card animate-pulse p-8 dark:bg-gray-800">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-4"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-4"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 mb-4"></div>
       </div>
     );
   }
 
   return (
     <div className="card max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">
+      <h1 className="text-2xl font-bold mb-6 dark:text-gray-200">
         {isEditMode ? 'Edit Food' : 'Add New Food'}
       </h1>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6">
           {error}
         </div>
       )}
@@ -220,10 +220,10 @@ const FoodForm = () => {
         <div className="grid grid-cols-1 gap-6 mb-6">
           {/* Basic Information */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Basic Information</h2>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="form-label">Name</label>
+                <label htmlFor="name" className="form-label dark:text-gray-300">Name</label>
                 <input
                   id="name"
                   type="text"
@@ -235,7 +235,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="category" className="form-label">Category</label>
+                <label htmlFor="category" className="form-label dark:text-gray-300">Category</label>
                 <select
                   id="category"
                   className="form-input"
@@ -256,10 +256,10 @@ const FoodForm = () => {
 
           {/* Serving Information */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Serving Information</h2>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Serving Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="servingSize" className="form-label">Serving Size</label>
+                <label htmlFor="servingSize" className="form-label dark:text-gray-300">Serving Size</label>
                 <input
                   id="servingSize"
                   type="number"
@@ -272,7 +272,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="servingUnit" className="form-label">Unit</label>
+                <label htmlFor="servingUnit" className="form-label dark:text-gray-300">Unit</label>
                 <select
                   id="servingUnit"
                   className="form-input"
@@ -292,10 +292,10 @@ const FoodForm = () => {
 
           {/* Nutritional Information */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Nutritional Information (per serving)</h2>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Nutritional Information (per serving)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="calories" className="form-label">Calories</label>
+                <label htmlFor="calories" className="form-label dark:text-gray-300">Calories</label>
                 <input
                   id="calories"
                   type="number"
@@ -308,7 +308,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="protein" className="form-label">Protein (g)</label>
+                <label htmlFor="protein" className="form-label dark:text-gray-300">Protein (g)</label>
                 <input
                   id="protein"
                   type="number"
@@ -321,7 +321,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="carbs" className="form-label">Carbohydrates (g)</label>
+                <label htmlFor="carbs" className="form-label dark:text-gray-300">Carbohydrates (g)</label>
                 <input
                   id="carbs"
                   type="number"
@@ -334,7 +334,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="fat" className="form-label">Fat (g)</label>
+                <label htmlFor="fat" className="form-label dark:text-gray-300">Fat (g)</label>
                 <input
                   id="fat"
                   type="number"
@@ -347,7 +347,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="fiber" className="form-label">Fiber (g, optional)</label>
+                <label htmlFor="fiber" className="form-label dark:text-gray-300">Fiber (g, optional)</label>
                 <input
                   id="fiber"
                   type="number"
@@ -361,7 +361,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="sugar" className="form-label">Sugar (g, optional)</label>
+                <label htmlFor="sugar" className="form-label dark:text-gray-300">Sugar (g, optional)</label>
                 <input
                   id="sugar"
                   type="number"
@@ -375,7 +375,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="sodium" className="form-label">Sodium (mg, optional)</label>
+                <label htmlFor="sodium" className="form-label dark:text-gray-300">Sodium (mg, optional)</label>
                 <input
                   id="sodium"
                   type="number"
@@ -389,7 +389,7 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="cholesterol" className="form-label">Cholesterol (mg, optional)</label>
+                <label htmlFor="cholesterol" className="form-label dark:text-gray-300">Cholesterol (mg, optional)</label>
                 <input
                   id="cholesterol"
                   type="number"
@@ -407,18 +407,18 @@ const FoodForm = () => {
 
           {/* Tags */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Tags</h2>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Tags</h2>
             <div className="flex flex-wrap gap-2 mb-3">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full text-sm"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="ml-1 text-primary-600 hover:text-primary-800"
+                    className="ml-1 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
                   >
                     &times;
                   </button>
@@ -445,18 +445,18 @@ const FoodForm = () => {
 
           {/* Allergens */}
           <div>
-            <h2 className="text-lg font-medium mb-4">Allergens</h2>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Allergens</h2>
             <div className="flex flex-wrap gap-2 mb-3">
               {allergens.map((allergen) => (
                 <span
                   key={allergen}
-                  className="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-sm"
                 >
                   {allergen}
                   <button
                     type="button"
                     onClick={() => removeAllergen(allergen)}
-                    className="ml-1 text-red-600 hover:text-red-800"
+                    className="ml-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                   >
                     &times;
                   </button>

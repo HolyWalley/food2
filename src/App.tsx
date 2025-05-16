@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Context Providers
 import { DatabaseProvider } from './contexts/DatabaseContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Layout Components
 import Layout from './components/Layout/Layout';
@@ -38,9 +39,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <DatabaseProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Layout />}>
+        <ThemeProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Layout />}>
               {/* Dashboard */}
               <Route index element={<Dashboard />} />
               
@@ -72,7 +74,8 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
-        </Router>
+          </Router>
+        </ThemeProvider>
       </DatabaseProvider>
     </QueryClientProvider>
   );

@@ -4,6 +4,8 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // Set darkMode to 'class' to allow manual toggling
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {

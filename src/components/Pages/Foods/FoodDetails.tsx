@@ -37,12 +37,12 @@ const FoodDetails = () => {
   if (isLoading) {
     return (
       <div className="animate-pulse p-4">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
         </div>
       </div>
     );
@@ -51,7 +51,7 @@ const FoodDetails = () => {
   // Render error state
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
         Error loading food details: {(error as Error).message}
       </div>
     );
@@ -61,8 +61,8 @@ const FoodDetails = () => {
   if (!food) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold text-gray-600">Food Not Found</h2>
-        <p className="mt-2 text-gray-500">The food item you're looking for doesn't exist or has been deleted.</p>
+        <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300">Food Not Found</h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">The food item you're looking for doesn't exist or has been deleted.</p>
         <Link to="/foods" className="btn btn-primary mt-6">
           Back to Foods
         </Link>
@@ -73,22 +73,22 @@ const FoodDetails = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-6">
-        <Link to="/foods" className="text-gray-500 hover:text-gray-700 mr-4">
+        <Link to="/foods" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4">
           <span className="material-symbols-outlined align-middle">arrow_back</span>
           <span className="align-middle ml-1">Back to Foods</span>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
           <div>
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-800">{food.name}</h1>
-              <span className="ml-3 bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded">
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">{food.name}</h1>
+              <span className="ml-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm px-3 py-1 rounded">
                 {food.category}
               </span>
             </div>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Serving size: {food.serving.size} {food.serving.unit}
             </p>
           </div>
@@ -108,50 +108,50 @@ const FoodDetails = () => {
         </div>
 
         <div className="mb-6">
-          <h2 className="text-lg font-medium mb-3 text-gray-800">Nutritional Information</h2>
+          <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Nutritional Information</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-lg font-bold text-green-700">{food.nutrients.calories}</div>
-              <div className="text-sm text-green-600">Calories</div>
+            <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+              <div className="text-lg font-bold text-green-700 dark:text-green-300">{food.nutrients.calories}</div>
+              <div className="text-sm text-green-600 dark:text-green-400">Calories</div>
             </div>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-lg font-bold text-blue-700">{food.nutrients.protein}g</div>
-              <div className="text-sm text-blue-600">Protein</div>
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+              <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{food.nutrients.protein}g</div>
+              <div className="text-sm text-blue-600 dark:text-blue-400">Protein</div>
             </div>
-            <div className="bg-amber-50 p-4 rounded-lg">
-              <div className="text-lg font-bold text-amber-700">{food.nutrients.carbs}g</div>
-              <div className="text-sm text-amber-600">Carbohydrates</div>
+            <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+              <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{food.nutrients.carbs}g</div>
+              <div className="text-sm text-amber-600 dark:text-amber-400">Carbohydrates</div>
             </div>
-            <div className="bg-rose-50 p-4 rounded-lg">
-              <div className="text-lg font-bold text-rose-700">{food.nutrients.fat}g</div>
-              <div className="text-sm text-rose-600">Fat</div>
+            <div className="bg-rose-50 dark:bg-rose-900/30 p-4 rounded-lg">
+              <div className="text-lg font-bold text-rose-700 dark:text-rose-300">{food.nutrients.fat}g</div>
+              <div className="text-sm text-rose-600 dark:text-rose-400">Fat</div>
             </div>
           </div>
 
-          <h3 className="text-md font-medium mb-2 text-gray-700">Additional Nutrients</h3>
+          <h3 className="text-md font-medium mb-2 text-gray-700 dark:text-gray-300">Additional Nutrients</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {food.nutrients.fiber !== undefined && (
-              <div className="p-3 border border-gray-100 rounded">
-                <div className="text-sm font-semibold">{food.nutrients.fiber}g</div>
-                <div className="text-xs text-gray-500">Fiber</div>
+              <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                <div className="text-sm font-semibold dark:text-gray-200">{food.nutrients.fiber}g</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Fiber</div>
               </div>
             )}
             {food.nutrients.sugar !== undefined && (
-              <div className="p-3 border border-gray-100 rounded">
-                <div className="text-sm font-semibold">{food.nutrients.sugar}g</div>
-                <div className="text-xs text-gray-500">Sugar</div>
+              <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                <div className="text-sm font-semibold dark:text-gray-200">{food.nutrients.sugar}g</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Sugar</div>
               </div>
             )}
             {food.nutrients.sodium !== undefined && (
-              <div className="p-3 border border-gray-100 rounded">
-                <div className="text-sm font-semibold">{food.nutrients.sodium}mg</div>
-                <div className="text-xs text-gray-500">Sodium</div>
+              <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                <div className="text-sm font-semibold dark:text-gray-200">{food.nutrients.sodium}mg</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Sodium</div>
               </div>
             )}
             {food.nutrients.cholesterol !== undefined && (
-              <div className="p-3 border border-gray-100 rounded">
-                <div className="text-sm font-semibold">{food.nutrients.cholesterol}mg</div>
-                <div className="text-xs text-gray-500">Cholesterol</div>
+              <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                <div className="text-sm font-semibold dark:text-gray-200">{food.nutrients.cholesterol}mg</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Cholesterol</div>
               </div>
             )}
           </div>
@@ -159,12 +159,12 @@ const FoodDetails = () => {
 
         {food.allergens && food.allergens.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-lg font-medium mb-3 text-gray-800">Allergens</h2>
+            <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Allergens</h2>
             <div className="flex flex-wrap gap-2">
               {food.allergens.map(allergen => (
                 <span
                   key={allergen}
-                  className="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full text-sm"
                 >
                   {allergen}
                 </span>
@@ -175,12 +175,12 @@ const FoodDetails = () => {
 
         {food.tags && food.tags.length > 0 && (
           <div>
-            <h2 className="text-lg font-medium mb-3 text-gray-800">Tags</h2>
+            <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Tags</h2>
             <div className="flex flex-wrap gap-2">
               {food.tags.map(tag => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm"
+                  className="inline-flex items-center px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded-full text-sm"
                 >
                   {tag}
                 </span>
@@ -190,25 +190,25 @@ const FoodDetails = () => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-lg font-medium mb-4 text-gray-800">Metadata</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">Metadata</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <span className="text-gray-500 text-sm">Created</span>
-            <p>{new Date(food.createdAt).toLocaleString()}</p>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">Created</span>
+            <p className="dark:text-gray-300">{new Date(food.createdAt).toLocaleString()}</p>
           </div>
           <div>
-            <span className="text-gray-500 text-sm">Last Updated</span>
-            <p>{new Date(food.updatedAt).toLocaleString()}</p>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">Last Updated</span>
+            <p className="dark:text-gray-300">{new Date(food.updatedAt).toLocaleString()}</p>
           </div>
           <div>
-            <span className="text-gray-500 text-sm">ID</span>
-            <p className="font-mono text-sm">{food._id}</p>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">ID</span>
+            <p className="font-mono text-sm dark:text-gray-300">{food._id}</p>
           </div>
           {food._rev && (
             <div>
-              <span className="text-gray-500 text-sm">Revision</span>
-              <p className="font-mono text-sm">{food._rev}</p>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">Revision</span>
+              <p className="font-mono text-sm dark:text-gray-300">{food._rev}</p>
             </div>
           )}
         </div>

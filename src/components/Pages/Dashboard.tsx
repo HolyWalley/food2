@@ -119,7 +119,7 @@ const Dashboard = () => {
 
       {/* Display any data fetching errors */}
       {hasErrors && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-6">
           <p className="mb-3">
             {foodError && `Error loading foods: ${(foodError as Error).message}`}
             {recipeError && `Error loading recipes: ${(recipeError as Error).message}`}
@@ -127,9 +127,9 @@ const Dashboard = () => {
           </p>
           
           <div className="mt-3">
-            <p className="text-gray-700 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
+            <p className="text-gray-700 dark:text-gray-300 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
             <button 
-              className="btn btn-secondary" 
+              className="btn btn-secondary dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600" 
               onClick={handleResetIndexes}
               disabled={isResetting}
             >
@@ -140,20 +140,20 @@ const Dashboard = () => {
       )}
 
       {/* Status bar */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6 flex items-center justify-between">
         <div className="flex items-center">
           <span 
             className={`inline-block w-3 h-3 rounded-full mr-2 ${
               isOnline ? 'bg-green-500' : 'bg-red-500'
             }`}
           ></span>
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium dark:text-gray-300">
             {isOnline ? 'Online' : 'Offline'} Mode
           </span>
           {isSyncing && (
-            <span className="ml-4 flex items-center text-sm text-blue-600">
+            <span className="ml-4 flex items-center text-sm text-blue-600 dark:text-blue-400">
               <svg 
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" 
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" 
                 xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
                 viewBox="0 0 24 24"
@@ -177,12 +177,12 @@ const Dashboard = () => {
           )}
         </div>
         <div className="flex items-center">
-          <span className="text-sm text-gray-500 mr-4">
+          <span className="text-sm text-gray-500 dark:text-gray-400 mr-4">
             Last update: {new Date().toLocaleString()}
           </span>
           {!hasErrors && (
             <button 
-              className="text-xs text-gray-500 hover:text-gray-700 underline"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline"
               onClick={handleResetIndexes}
               disabled={isResetting}
             >
@@ -198,36 +198,41 @@ const Dashboard = () => {
           <Link
             key={index}
             to={stat.link}
-            className="bg-white rounded-lg shadow-sm p-6 flex items-center hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex items-center hover:shadow-md transition-shadow"
           >
-            <div className={`p-3 rounded-full ${stat.color} mr-4`}>
+            <div className={`p-3 rounded-full ${
+              stat.color.includes('green') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+              stat.color.includes('blue') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+              stat.color.includes('purple') ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
+              stat.color
+            } mr-4`}>
               <span className="material-symbols-outlined text-xl">{stat.icon}</span>
             </div>
             <div>
-              <div className="text-2xl font-bold">{stat.count}</div>
-              <div className="text-sm text-gray-500">{stat.title}</div>
+              <div className="text-3xl font-bold dark:text-white">{stat.count}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-300">{stat.title}</div>
             </div>
           </Link>
         ))}
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-        <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
+        <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {quickActions.map((action, index) => (
             <Link
               key={index}
               to={action.link}
-              className="p-4 border border-gray-100 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors"
+              className="p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <div className="flex items-center">
-                <span className={`material-symbols-outlined text-xl ${action.color} mr-3`}>
+                <span className={`material-symbols-outlined text-xl ${action.color} dark:text-opacity-80 mr-3`}>
                   {action.icon}
                 </span>
-                <h3 className="font-medium">{action.title}</h3>
+                <h3 className="font-medium dark:text-gray-200">{action.title}</h3>
               </div>
-              <p className="text-sm text-gray-500 mt-2">{action.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{action.description}</p>
             </Link>
           ))}
         </div>
@@ -236,29 +241,29 @@ const Dashboard = () => {
       {/* Recent Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recent Foods */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Recent Foods</h2>
-            <Link to="/foods" className="text-primary-600 hover:text-primary-800 text-sm">
+            <h2 className="text-lg font-medium dark:text-gray-200">Recent Foods</h2>
+            <Link to="/foods" className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm">
               View All
             </Link>
           </div>
           
           {recentFoods.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No foods added yet.</p>
-              <Link to="/foods/new" className="btn btn-primary mt-4">Add Food</Link>
+              <p className="text-gray-500 dark:text-gray-400">No foods added yet.</p>
+              <Link to="/foods/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600 mt-4">Add Food</Link>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
               {recentFoods.map(food => (
                 <li key={food._id} className="py-3">
-                  <Link to={`/foods/${food._id}`} className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-md -mx-2">
+                  <Link to={`/foods/${food._id}`} className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-md -mx-2">
                     <div>
-                      <h3 className="font-medium text-gray-800">{food.name}</h3>
-                      <p className="text-sm text-gray-500">{food.category}</p>
+                      <h3 className="font-medium text-gray-800 dark:text-gray-200">{food.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{food.category}</p>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       {food.nutrients.calories} kcal
                     </div>
                   </Link>
@@ -269,29 +274,29 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Recipes */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Recent Recipes</h2>
-            <Link to="/recipes" className="text-primary-600 hover:text-primary-800 text-sm">
+            <h2 className="text-lg font-medium dark:text-gray-200">Recent Recipes</h2>
+            <Link to="/recipes" className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm">
               View All
             </Link>
           </div>
           
           {recentRecipes.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No recipes added yet.</p>
-              <Link to="/recipes/new" className="btn btn-primary mt-4">Add Recipe</Link>
+              <p className="text-gray-500 dark:text-gray-400">No recipes added yet.</p>
+              <Link to="/recipes/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600 mt-4">Add Recipe</Link>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
               {recentRecipes.map(recipe => (
                 <li key={recipe._id} className="py-3">
-                  <Link to={`/recipes/${recipe._id}`} className="flex items-center justify-between hover:bg-gray-50 p-2 rounded-md -mx-2">
+                  <Link to={`/recipes/${recipe._id}`} className="flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded-md -mx-2">
                     <div>
-                      <h3 className="font-medium text-gray-800">{recipe.name}</h3>
-                      <p className="text-sm text-gray-500">{recipe.ingredients.length} ingredients</p>
+                      <h3 className="font-medium text-gray-800 dark:text-gray-200">{recipe.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{recipe.ingredients.length} ingredients</p>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       {recipe.servings} servings
                     </div>
                   </Link>

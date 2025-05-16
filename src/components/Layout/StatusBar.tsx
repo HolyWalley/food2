@@ -4,7 +4,7 @@ const StatusBar = () => {
   const { isOnline, isSyncing, syncError } = useDatabase();
 
   return (
-    <footer className="bg-white border-t border-gray-200 py-2 px-4">
+    <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-2 px-4">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
@@ -13,15 +13,15 @@ const StatusBar = () => {
                 isOnline ? 'bg-green-500' : 'bg-red-500'
               }`}
             ></span>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               {isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
           
           {isSyncing && (
-            <div className="flex items-center text-sm text-blue-600">
+            <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
               <svg 
-                className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" 
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" 
                 xmlns="http://www.w3.org/2000/svg" 
                 fill="none" 
                 viewBox="0 0 24 24"
@@ -45,13 +45,13 @@ const StatusBar = () => {
           )}
           
           {syncError && (
-            <div className="text-sm text-red-600">
+            <div className="text-sm text-red-600 dark:text-red-400">
               Sync Error: {syncError}
             </div>
           )}
         </div>
         
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           Food Planning App v0.1.0
         </div>
       </div>

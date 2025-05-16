@@ -77,14 +77,14 @@ const FoodsList = () => {
   if (isLoading) {
     return (
       <div className="animate-pulse p-4">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-md p-6">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
             </div>
           ))}
         </div>
@@ -95,13 +95,13 @@ const FoodsList = () => {
   // Render error state
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
         <p className="mb-3">Error loading foods: {(error as Error).message}</p>
         
         <div className="mt-3">
-          <p className="text-gray-700 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-2">This might be caused by a database index issue. Try resetting the indexes to fix the problem:</p>
           <button 
-            className="btn btn-secondary" 
+            className="btn btn-secondary dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600" 
             onClick={handleResetIndexes}
             disabled={isResetting}
           >
@@ -115,13 +115,13 @@ const FoodsList = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">Foods</h1>
+        <h1 className="text-2xl font-bold mb-4 sm:mb-0 dark:text-gray-200">Foods</h1>
         <Link to="/foods/new" className="btn btn-primary">
           Add New Food
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-grow">
             <input
@@ -150,7 +150,7 @@ const FoodsList = () => {
 
       {filteredFoods?.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No foods found matching your criteria.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-lg">No foods found matching your criteria.</p>
           <Link to="/foods/new" className="btn btn-primary mt-4">
             Add New Food
           </Link>
@@ -171,36 +171,36 @@ const FoodCard = ({ food }: { food: Food }) => {
   return (
     <Link
       to={`/foods/${food._id}`}
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
     >
       <div className="p-6">
         <div className="flex justify-between items-start">
-          <h2 className="text-lg font-semibold mb-2 text-gray-800">{food.name}</h2>
-          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
+          <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100">{food.name}</h2>
+          <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded">
             {food.category}
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
           <div className="flex flex-col">
-            <span className="text-gray-500">Calories</span>
-            <span className="font-medium">{food.nutrients.calories} kcal</span>
+            <span className="text-gray-500 dark:text-gray-400">Calories</span>
+            <span className="font-medium dark:text-white">{food.nutrients.calories} kcal</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-gray-500">Protein</span>
-            <span className="font-medium">{food.nutrients.protein}g</span>
+            <span className="text-gray-500 dark:text-gray-400">Protein</span>
+            <span className="font-medium dark:text-white">{food.nutrients.protein}g</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-gray-500">Carbs</span>
-            <span className="font-medium">{food.nutrients.carbs}g</span>
+            <span className="text-gray-500 dark:text-gray-400">Carbs</span>
+            <span className="font-medium dark:text-white">{food.nutrients.carbs}g</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-gray-500">Fat</span>
-            <span className="font-medium">{food.nutrients.fat}g</span>
+            <span className="text-gray-500 dark:text-gray-400">Fat</span>
+            <span className="font-medium dark:text-white">{food.nutrients.fat}g</span>
           </div>
         </div>
 
-        <div className="mt-4 flex items-center text-sm text-gray-600">
+        <div className="mt-4 flex items-center text-sm text-gray-600 dark:text-gray-400">
           <span>
             Serving: {food.serving.size} {food.serving.unit}
           </span>
@@ -211,7 +211,7 @@ const FoodCard = ({ food }: { food: Food }) => {
             {food.tags.map(tag => (
               <span
                 key={tag}
-                className="inline-block bg-primary-50 text-primary-700 text-xs px-2 py-1 rounded-full"
+                className="inline-block bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs px-2 py-1 rounded-full"
               >
                 {tag}
               </span>
