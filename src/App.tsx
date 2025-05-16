@@ -24,6 +24,7 @@ import RecipeForm from './components/Pages/Recipes/RecipeForm';
 import MenusList from './components/Pages/Menus/MenusList';
 import MenuDetails from './components/Pages/Menus/MenuDetails';
 import MenuForm from './components/Pages/Menus/MenuForm';
+import ShoppingList from './components/Pages/Menus/ShoppingList';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -70,6 +71,7 @@ function App() {
                 <Route path="new" element={<MenuForm />} />
                 <Route path=":id" element={<MenuDetails />} />
                 <Route path=":id/edit" element={<MenuForm />} />
+                <Route path=":id/shopping-list" element={<ShoppingList />} />
               </Route>
               
               {/* 404 Not Found */}

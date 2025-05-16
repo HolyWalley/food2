@@ -169,6 +169,10 @@ const MenuDetails = () => {
                 </div>
                 
                 <div className="flex space-x-3 mt-4 md:mt-0">
+                  <Link to={`/menus/${menu._id}/shopping-list`} className="btn btn-primary flex items-center">
+                    <span className="material-symbols-outlined mr-1">shopping_cart</span>
+                    Shopping List
+                  </Link>
                   <Link to={`/menus/${menu._id}/edit`} className="btn btn-secondary">
                     Edit
                   </Link>
