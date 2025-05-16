@@ -74,31 +74,29 @@ class Database {
   // Setup database indexes for efficient querying
   private async setupIndexes(): Promise<void> {
     try {
-      // Define proper indexes with names
-      const indexes = [
-        {
-          name: 'idx_type',
-          index: { fields: ['type'] }
-        },
-        {
-          name: 'idx_type_name', 
-          index: { fields: ['type', 'name'] }
-        },
-        {
-          name: 'idx_type_category',
-          index: { fields: ['type', 'category'] }
-        },
-        {
-          name: 'idx_type_date',
-          index: { fields: ['type', 'date'] }
-        }
-      ];
-
-      // Create each index with proper configuration
-      for (const indexDef of indexes) {
-        console.log(`Creating index: ${indexDef.name}`);
-        await this.db.createIndex(indexDef);
-      }
+      // Create the most basic index for each field we need to query
+      // Use the most simple form for maximum compatibility
+      console.log('Creating type index');
+      await this.db.createIndex({
+        index: { fields: ['type'] }
+      });
+      
+      console.log('Creating name index');
+      await this.db.createIndex({
+        index: { fields: ['name'] }
+      });
+      
+      console.log('Creating category index');
+      await this.db.createIndex({
+        index: { fields: ['category'] }
+      });
+      
+      console.log('Creating date index');
+      await this.db.createIndex({
+        index: { fields: ['date'] }
+      });
+      
+      // Let PouchDB combine indexes when needed
 
       console.log('Database indexes created successfully');
     } catch (error) {
@@ -194,37 +192,44 @@ class Database {
     options: PouchDB.Find.FindRequest<T> = {}
   ): Promise<T[]> {
     try {
-      // Create a modified selector that includes fields needed for sorting
-      let modifiedSelector: PouchDB.Find.Selector = { ...selector };
+      // Strip out all sorting to avoid indexing issues
+      // Sort will be done in JS after fetching
+      const strippedOptions = { ...options };
+      delete strippedOptions.sort;
+      delete strippedOptions.use_index;
       
-      // If we have sort fields, make sure they're included in the selector
-      if (options.sort) {
-        for (const sortField of options.sort) {
-          for (const field in sortField) {
-            // Add field to selector if it's not already there
-            if (!modifiedSelector[field]) {
-              // Create a selector for the field that matches any value
-              modifiedSelector[field] = { $gt: null };
-            }
-          }
-        }
-      }
-      
-      // Build the full query - use the modified selector
+      // Use the most basic query possible
       const query: PouchDB.Find.FindRequest<T> = {
-        selector: modifiedSelector,
-        ...options
+        selector,
+        ...strippedOptions
       };
 
-      // Debug log to help troubleshoot
-      console.log('PouchDB query:', JSON.stringify(query, null, 2));
+      // Debug log
+      console.log('PouchDB query (simplified):', JSON.stringify(query, null, 2));
 
       // Execute the query
       const result = await this.db.find(query);
       return result.docs as T[];
     } catch (error) {
       console.error('Error finding documents:', error);
-      throw error;
+      
+      // Try with allDocs as a fallback
+      try {
+        console.log('Trying allDocs as fallback');
+        const response = await this.db.allDocs({ include_docs: true });
+        const allDocs = response.rows.map(row => row.doc) as T[];
+        
+        // Filter the documents based on the selector
+        // Only support simple type selector for now
+        if (selector.type) {
+          return allDocs.filter(doc => doc.type === selector.type);
+        }
+        
+        return allDocs;
+      } catch (fallbackError) {
+        console.error('Even fallback query failed:', fallbackError);
+        throw error; // Throw the original error
+      }
     }
   }
 

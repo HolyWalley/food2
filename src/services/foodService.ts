@@ -46,26 +46,37 @@ export class FoodService {
    */
   async getAllFoods(): Promise<Food[]> {
     try {
-      console.log('Fetching all foods with type-name index');
-      // Create a simplified query that will work with our indexes
-      return await db.find<Food>(
+      console.log('Fetching all foods with basic type filter');
+      // Use the most basic query possible with no sorting in PouchDB
+      const result = await db.find<Food>(
         {
           type: DocumentTypes.FOOD
         },
         {
-          sort: [{ name: 'asc' }],
-          use_index: 'idx_type_name' // Use the named index, not the design doc ID
+          // Don't specify any indexes or sorting
         }
       );
+      
+      // Sort in JavaScript instead of PouchDB
+      return result.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error in getAllFoods:', error);
       
-      // Fallback approach if the index query doesn't work
-      console.log('Falling back to unordered query');
-      const allFoods = await db.find<Food>({ type: DocumentTypes.FOOD }, {});
-      
-      // Sort manually in JS
-      return allFoods.sort((a, b) => a.name.localeCompare(b.name));
+      // Even more basic fallback approach
+      try {
+        console.log('Trying with allDocs as fallback');
+        // Use allDocs to get everything, then filter in JS
+        const response = await (db as any).db.allDocs({ include_docs: true });
+        const allDocs = response.rows.map(row => row.doc);
+        
+        // Filter for food documents and sort by name
+        return allDocs
+          .filter(doc => doc.type === DocumentTypes.FOOD)
+          .sort((a, b) => a.name.localeCompare(b.name));
+      } catch (fallbackError) {
+        console.error('Final fallback error:', fallbackError);
+        return []; // Return empty array as last resort
+      }
     }
   }
 
@@ -91,29 +102,31 @@ export class FoodService {
   async getFoodsByCategory(category: string): Promise<Food[]> {
     try {
       console.log(`Fetching foods by category: ${category}`);
-      // Use a simplified query with proper index
-      return await db.find<Food>(
+      // Use the most basic query possible
+      const result = await db.find<Food>(
         {
           type: DocumentTypes.FOOD,
           category
-        }, 
+        },
         {
-          sort: [{ name: 'asc' }],
-          use_index: 'idx_type_category'
+          // No sorting, no index specification
         }
       );
+      
+      // Sort manually in JavaScript
+      return result.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error(`Error in getFoodsByCategory for ${category}:`, error);
       
-      // Fallback approach
-      console.log('Falling back to unordered category filter');
-      const allFoods = await db.find<Food>({ 
-        type: DocumentTypes.FOOD,
-        category
-      }, {});
-      
-      // Sort manually in JS
-      return allFoods.sort((a, b) => a.name.localeCompare(b.name));
+      // Fallback to using getAllFoods and then filtering
+      console.log('Falling back to getAllFoods with filtering');
+      try {
+        const allFoods = await this.getAllFoods();
+        return allFoods.filter(food => food.category === category);
+      } catch (fallbackError) {
+        console.error('Final fallback error:', fallbackError);
+        return []; // Return empty array as last resort
+      }
     }
   }
 

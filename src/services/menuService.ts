@@ -48,29 +48,40 @@ export class MenuService {
    */
   async getAllMenus(): Promise<Menu[]> {
     try {
-      console.log('Fetching all menus with type-date index');
-      // Use a simplified query with proper index
-      return await db.find<Menu>(
+      console.log('Fetching all menus with basic query');
+      // Use the most basic query possible
+      const result = await db.find<Menu>(
         {
           type: DocumentTypes.MENU
         },
         {
-          sort: [{ date: 'desc' }],
-          use_index: 'idx_type_date'
+          // No sorting, no index specification
         }
       );
-    } catch (error) {
-      console.error('Error in getAllMenus:', error);
       
-      // Fallback approach if the index query doesn't work
-      console.log('Falling back to unordered menu query');
-      const allMenus = await db.find<Menu>({ type: DocumentTypes.MENU }, {});
-      
-      // Sort manually in JS
-      return allMenus.sort((a, b) => {
+      // Sort in JavaScript instead of PouchDB
+      return result.sort((a, b) => {
         // Sort by date descending
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
+    } catch (error) {
+      console.error('Error in getAllMenus:', error);
+      
+      // Fallback to allDocs approach
+      try {
+        console.log('Trying with allDocs as fallback');
+        // Use allDocs to get everything, then filter in JS
+        const response = await (db as any).db.allDocs({ include_docs: true });
+        const allDocs = response.rows.map(row => row.doc);
+        
+        // Filter for menu documents and sort by date
+        return allDocs
+          .filter(doc => doc.type === DocumentTypes.MENU)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      } catch (fallbackError) {
+        console.error('Final fallback error:', fallbackError);
+        return []; // Return empty array as last resort
+      }
     }
   }
 
@@ -80,36 +91,34 @@ export class MenuService {
   async getMenusByDateRange(startDate: string, endDate: string): Promise<Menu[]> {
     try {
       console.log(`Fetching menus in date range: ${startDate} to ${endDate}`);
-      // Use a simplified query with proper index
-      return await db.find<Menu>(
-        {
-          type: DocumentTypes.MENU,
-          date: {
-            $gte: startDate,
-            $lte: endDate
-          }
-        }, 
-        {
-          sort: [{ date: 'asc' }],
-          use_index: 'idx_type_date'
-        }
-      );
+      
+      // First try getting all menus and filtering in JS
+      const allMenus = await this.getAllMenus();
+      
+      // Filter for the date range and sort
+      return allMenus
+        .filter(menu => menu.date >= startDate && menu.date <= endDate)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     } catch (error) {
       console.error(`Error in getMenusByDateRange for ${startDate} to ${endDate}:`, error);
       
-      // Fallback approach if the index query doesn't work
-      console.log('Falling back to unordered date range query with manual filter');
-      const allMenus = await db.find<Menu>({ type: DocumentTypes.MENU }, {});
-      
-      // Filter and sort manually in JS
-      return allMenus
-        .filter(menu => {
-          return menu.date >= startDate && menu.date <= endDate;
-        })
-        .sort((a, b) => {
-          // Sort by date ascending
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
+      // Final fallback with allDocs if needed
+      try {
+        console.log('Trying with allDocs as fallback for date range');
+        const response = await (db as any).db.allDocs({ include_docs: true });
+        const allDocs = response.rows.map(row => row.doc);
+        
+        return allDocs
+          .filter(doc => 
+            doc.type === DocumentTypes.MENU && 
+            doc.date >= startDate && 
+            doc.date <= endDate
+          )
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      } catch (fallbackError) {
+        console.error('Final fallback error:', fallbackError);
+        return []; // Return empty array as last resort
+      }
     }
   }
 
