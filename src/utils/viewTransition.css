@@ -16,7 +16,9 @@
 
   /* Let the card container morph naturally without custom animations */
   ::view-transition-old(food-card-container-*),
-  ::view-transition-new(food-card-container-*) {
+  ::view-transition-new(food-card-container-*),
+  ::view-transition-old(menu-card-container-*),
+  ::view-transition-new(menu-card-container-*) {
     /* Allow this element to fully morph from one state to another */
     /* No custom animations - the browser will automatically morph the shape */
     height: 100%;
@@ -25,7 +27,8 @@
   }
   
   /* When transitioning to detail view (the new is the details page) */
-  ::view-transition-new(food-card-container-*) {
+  ::view-transition-new(food-card-container-*),
+  ::view-transition-new(menu-card-container-*) {
     /* Special handling for expansion */
     overflow: hidden;
     border-radius: 0.5rem; /* Match the card's border radius */
@@ -41,7 +44,17 @@
   ::view-transition-old(food-serving-*),
   ::view-transition-new(food-serving-*),
   ::view-transition-old(food-tags-*),
-  ::view-transition-new(food-tags-*) {
+  ::view-transition-new(food-tags-*),
+  ::view-transition-old(menu-title-*),
+  ::view-transition-new(menu-title-*),
+  ::view-transition-old(menu-date-badge-*),
+  ::view-transition-new(menu-date-badge-*),
+  ::view-transition-old(menu-description-*),
+  ::view-transition-new(menu-description-*),
+  ::view-transition-old(menu-items-*),
+  ::view-transition-new(menu-items-*),
+  ::view-transition-old(menu-tags-*),
+  ::view-transition-new(menu-tags-*) {
     /* Allow these elements to naturally morph */
     height: 100%;
     width: 100%;
@@ -53,11 +66,18 @@
   }
   
   /* Adjust the animation speed based on direction */
-  html[data-direction="food-to-details"] ::view-transition-group(root) {
+  html[data-direction="food-to-details"],
+  html[data-direction="menu-to-details"] {
+    /* Properties for expansion */
+  }
+  
+  html[data-direction="food-to-details"] ::view-transition-group(root),
+  html[data-direction="menu-to-details"] ::view-transition-group(root) {
     animation-duration: 500ms; /* Slightly slower for expansion */
   }
   
-  html[data-direction="details-to-food"] ::view-transition-group(root) {
+  html[data-direction="details-to-food"] ::view-transition-group(root),
+  html[data-direction="details-to-menu"] ::view-transition-group(root) {
     animation-duration: 400ms; /* Slightly faster for collapse */
   }
 }

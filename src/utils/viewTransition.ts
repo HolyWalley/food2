@@ -25,7 +25,12 @@ export const supportsViewTransitions = (): boolean => {
 /**
  * Navigation directions for transition effects
  */
-type NavigationDirection = 'food-to-details' | 'details-to-food' | 'neutral';
+type NavigationDirection = 
+  | 'food-to-details' 
+  | 'details-to-food' 
+  | 'menu-to-details'
+  | 'details-to-menu'
+  | 'neutral';
 
 /**
  * Wraps navigation functions with View Transitions API if supported.

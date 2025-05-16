@@ -19,9 +19,11 @@ import NotFound from './components/Pages/NotFound';
 import RecipesList from './components/Pages/Recipes/RecipesList';
 import RecipeDetails from './components/Pages/Recipes/RecipeDetails';
 import RecipeForm from './components/Pages/Recipes/RecipeForm';
-const MenusList = () => <div className="p-4"><h1 className="text-2xl font-bold">Menus List</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
-const MenuDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Details</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
-const MenuForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Form</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+
+// Menu components
+import MenusList from './components/Pages/Menus/MenusList';
+import MenuDetails from './components/Pages/Menus/MenuDetails';
+import MenuForm from './components/Pages/Menus/MenuForm';
 
 // Create a query client
 const queryClient = new QueryClient({
