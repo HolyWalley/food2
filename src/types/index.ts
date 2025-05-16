@@ -67,4 +67,4 @@ export interface Menu extends BaseDocument {
   tags?: string[];
 }
 
-export type DocumentType = Food | Recipe | Menu;
+export type AppDocument = Food | Recipe | Menu;

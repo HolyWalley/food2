@@ -1,6 +1,6 @@
 import PouchDB from 'pouchdb';
 import PouchDBFind from 'pouchdb-find';
-import { DocumentType } from '../types';
+import { AppDocument } from '../types';
 
 // Register the find plugin
 PouchDB.plugin(PouchDBFind);
@@ -10,13 +10,13 @@ const DB_NAME = 'food-planner';
 
 // Create a class for database operations
 class Database {
-  private db: PouchDB.Database<DocumentType>;
-  private remoteDb: PouchDB.Database<DocumentType> | null = null;
-  private syncHandler: PouchDB.Replication.Sync<DocumentType> | null = null;
+  private db: PouchDB.Database<AppDocument>;
+  private remoteDb: PouchDB.Database<AppDocument> | null = null;
+  private syncHandler: PouchDB.Replication.Sync<AppDocument> | null = null;
 
   constructor() {
     // Initialize local database
-    this.db = new PouchDB<DocumentType>(DB_NAME);
+    this.db = new PouchDB<AppDocument>(DB_NAME);
     
     // Set up initial indexes
     this.setupIndexes().catch(console.error);
@@ -53,7 +53,7 @@ class Database {
 
     try {
       // Initialize remote database connection
-      this.remoteDb = new PouchDB<DocumentType>(remoteUrl);
+      this.remoteDb = new PouchDB<AppDocument>(remoteUrl);
       
       // Start bi-directional sync
       this.syncHandler = this.db.sync(this.remoteDb, {
@@ -85,7 +85,7 @@ class Database {
   }
 
   // Insert or update a document
-  public async put<T extends DocumentType>(doc: T): Promise<T> {
+  public async put<T extends AppDocument>(doc: T): Promise<T> {
     try {
       // Add timestamps
       const now = new Date().toISOString();
@@ -109,7 +109,7 @@ class Database {
   }
 
   // Get a document by ID
-  public async get<T extends DocumentType>(id: string): Promise<T> {
+  public async get<T extends AppDocument>(id: string): Promise<T> {
     try {
       return await this.db.get<T>(id);
     } catch (error) {
@@ -129,7 +129,7 @@ class Database {
   }
 
   // Query documents
-  public async find<T extends DocumentType>(
+  public async find<T extends AppDocument>(
     selector: PouchDB.Find.Selector,
     options: PouchDB.Find.FindRequest<T> = {}
   ): Promise<T[]> {
@@ -146,7 +146,7 @@ class Database {
   }
 
   // Get all documents of a specific type
-  public async getByType<T extends DocumentType>(
+  public async getByType<T extends AppDocument>(
     type: string,
     options: PouchDB.Find.FindRequest<T> = {}
   ): Promise<T[]> {
