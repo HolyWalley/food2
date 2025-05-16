@@ -4,21 +4,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Context Providers
 import { DatabaseProvider } from './contexts/DatabaseContext';
 
-// Layout Components (to be created)
-const Layout = () => <div className="flex min-h-screen"><div className="w-full p-4">Page content here</div></div>;
+// Layout Components
+import Layout from './components/Layout/Layout';
 
-// Page Components (placeholders for now)
-const Dashboard = () => <div className="p-4"><h1 className="text-2xl font-bold">Dashboard</h1></div>;
-const FoodsList = () => <div className="p-4"><h1 className="text-2xl font-bold">Foods List</h1></div>;
-const FoodDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Food Details</h1></div>;
-const FoodForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Food Form</h1></div>;
-const RecipesList = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipes List</h1></div>;
-const RecipeDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipe Details</h1></div>;
-const RecipeForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipe Form</h1></div>;
-const MenusList = () => <div className="p-4"><h1 className="text-2xl font-bold">Menus List</h1></div>;
-const MenuDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Details</h1></div>;
-const MenuForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Form</h1></div>;
-const NotFound = () => <div className="p-4"><h1 className="text-2xl font-bold">404 - Not Found</h1></div>;
+// Page Components
+import Dashboard from './components/Pages/Dashboard';
+import FoodsList from './components/Pages/Foods/FoodsList';
+import FoodDetails from './components/Pages/Foods/FoodDetails';
+import FoodForm from './components/Pages/Foods/FoodForm';
+import NotFound from './components/Pages/NotFound';
+
+// Placeholder components for not yet implemented pages
+const RecipesList = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipes List</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+const RecipeDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipe Details</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+const RecipeForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Recipe Form</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+const MenusList = () => <div className="p-4"><h1 className="text-2xl font-bold">Menus List</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+const MenuDetails = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Details</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
+const MenuForm = () => <div className="p-4"><h1 className="text-2xl font-bold">Menu Form</h1><p className="mt-2 text-gray-600">This feature is coming soon!</p></div>;
 
 // Create a query client
 const queryClient = new QueryClient({

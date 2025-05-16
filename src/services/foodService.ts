@@ -1,19 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from './db';
-import { Food, NutritionInfo, ServingInfo } from '../types';
+import { DocumentTypes, createFoodDocument } from '../models.js';
+
+// For TypeScript type checking
+import type { Food, NutritionInfo, ServingInfo } from '../types';
 
 export class FoodService {
   /**
    * Create a new food item
    */
   async createFood(food: Omit<Food, '_id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Food> {
-    const newFood: Food = {
+    const newFood = createFoodDocument({
       _id: `food_${uuidv4()}`,
-      type: 'food',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...food
-    };
+    });
 
     return await db.put(newFood);
   }
@@ -69,7 +71,7 @@ export class FoodService {
    */
   async getFoodsByCategory(category: string): Promise<Food[]> {
     return await db.find<Food>({
-      type: 'food',
+      type: DocumentTypes.FOOD,
       category
     }, {
       sort: [{ name: 'asc' }]

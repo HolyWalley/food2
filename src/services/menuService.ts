@@ -2,20 +2,22 @@ import { v4 as uuidv4 } from 'uuid';
 import db from './db';
 import foodService from './foodService';
 import recipeService from './recipeService';
-import { Menu, Food, Recipe, NutritionInfo, MenuItem } from '../types';
+import { DocumentTypes, createMenuDocument } from '../models.js';
+
+// For TypeScript type checking only
+import type { Menu, Food, Recipe, MenuItem, NutritionInfo } from '../types';
 
 export class MenuService {
   /**
    * Create a new menu
    */
   async createMenu(menu: Omit<Menu, '_id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Menu> {
-    const newMenu: Menu = {
+    const newMenu = createMenuDocument({
       _id: `menu_${uuidv4()}`,
-      type: 'menu',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...menu
-    };
+    });
 
     return await db.put(newMenu);
   }
@@ -55,7 +57,7 @@ export class MenuService {
    */
   async getMenusByDateRange(startDate: string, endDate: string): Promise<Menu[]> {
     return await db.find<Menu>({
-      type: 'menu',
+      type: DocumentTypes.MENU,
       date: {
         $gte: startDate,
         $lte: endDate

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
-import { Food } from '../../../types';
+import { type Food } from '../../../types';
 
 const FoodsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,15 +31,15 @@ const FoodsList = () => {
 
   // Filter foods based on search term and category
   const filteredFoods = foods?.filter(food => {
-    const matchesSearch = 
+    const matchesSearch =
       food.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (food.tags && food.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
-    
-    const matchesCategory = 
-      categoryFilter === '' || 
-      categoryFilter === 'All Categories' || 
+
+    const matchesCategory =
+      categoryFilter === '' ||
+      categoryFilter === 'All Categories' ||
       food.category === categoryFilter;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -138,7 +138,7 @@ const FoodsList = () => {
 // Food card component
 const FoodCard = ({ food }: { food: Food }) => {
   return (
-    <Link 
+    <Link
       to={`/foods/${food._id}`}
       className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden"
     >
@@ -149,7 +149,7 @@ const FoodCard = ({ food }: { food: Food }) => {
             {food.category}
           </span>
         </div>
-        
+
         <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
           <div className="flex flex-col">
             <span className="text-gray-500">Calories</span>
@@ -168,18 +168,18 @@ const FoodCard = ({ food }: { food: Food }) => {
             <span className="font-medium">{food.nutrients.fat}g</span>
           </div>
         </div>
-        
+
         <div className="mt-4 flex items-center text-sm text-gray-600">
           <span>
             Serving: {food.serving.size} {food.serving.unit}
           </span>
         </div>
-        
+
         {food.tags && food.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1">
             {food.tags.map(tag => (
-              <span 
-                key={tag} 
+              <span
+                key={tag}
                 className="inline-block bg-primary-50 text-primary-700 text-xs px-2 py-1 rounded-full"
               >
                 {tag}

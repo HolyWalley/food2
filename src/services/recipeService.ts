@@ -1,20 +1,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from './db';
 import foodService from './foodService';
-import { Recipe, Food, NutritionInfo, RecipeIngredient } from '../types';
+import { DocumentTypes, createRecipeDocument } from '../models.js';
+
+// For TypeScript type checking only
+import type { Recipe, RecipeIngredient, NutritionInfo } from '../types';
 
 export class RecipeService {
   /**
    * Create a new recipe
    */
   async createRecipe(recipe: Omit<Recipe, '_id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Recipe> {
-    const newRecipe: Recipe = {
+    const newRecipe = createRecipeDocument({
       _id: `recipe_${uuidv4()}`,
-      type: 'recipe',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...recipe
-    };
+    });
 
     return await db.put(newRecipe);
   }

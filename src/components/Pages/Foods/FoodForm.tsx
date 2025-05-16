@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
-import { Food, NutritionInfo, ServingInfo } from '../../../types';
+import type { Food, NutritionInfo, ServingInfo } from '../../../types';
 
 const FoodForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -75,7 +75,7 @@ const FoodForm = () => {
 
   // Create mutation
   const createMutation = useMutation({
-    mutationFn: (foodData: Omit<Food, '_id' | 'type' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (foodData: Omit<Food, '_id' | 'type' | 'createdAt' | 'updatedAt'>) =>
       foodService.createFood(foodData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foods'] });
@@ -353,7 +353,7 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={fiber === undefined ? '' : fiber}
-                  onChange={(e) => 
+                  onChange={(e) =>
                     setFiber(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
@@ -367,7 +367,7 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={sugar === undefined ? '' : sugar}
-                  onChange={(e) => 
+                  onChange={(e) =>
                     setSugar(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
@@ -381,7 +381,7 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={sodium === undefined ? '' : sodium}
-                  onChange={(e) => 
+                  onChange={(e) =>
                     setSodium(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
@@ -395,7 +395,7 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={cholesterol === undefined ? '' : cholesterol}
-                  onChange={(e) => 
+                  onChange={(e) =>
                     setCholesterol(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"

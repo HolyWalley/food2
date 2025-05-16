@@ -1,5 +1,11 @@
-// Using type-only imports to avoid runtime errors
+// Import runtime constants from JavaScript model file
+import { DocumentTypes } from '../models.js';
+
+// Using type-only imports for TypeScript type checking
 import type { Food, Recipe, Menu } from '../types';
+
+// Type for any document stored in the database (TypeScript only)
+type AppDocument = Food | Recipe | Menu;
 
 // Get the global PouchDB object that was loaded from CDN
 // Use type declaration to help TypeScript understand the global variable
@@ -8,27 +14,6 @@ declare const PouchDB: {
   plugin(plugin: any): void;
   on(eventName: string, callback: Function): void;
   version: string;
-};
-
-// Define our own document type inline to avoid module loading issues
-interface BaseDocument {
-  _id: string;
-  _rev?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Local copy of the AppDocument type
-type AppDocument = 
-  | (BaseDocument & { type: 'food' }) 
-  | (BaseDocument & { type: 'recipe' }) 
-  | (BaseDocument & { type: 'menu' });
-
-// Document type constants
-const documentTypes = {
-  food: 'food',
-  recipe: 'recipe',
-  menu: 'menu'
 };
 
 // Using the PouchDB object from the global scope (loaded via CDN)
@@ -186,15 +171,15 @@ class Database {
   
   // Helper methods for specific document types
   public async getAllFoods(options: PouchDB.Find.FindRequest<Food> = {}): Promise<Food[]> {
-    return this.getByType<Food>(documentTypes.food, options);
+    return this.getByType<Food>(DocumentTypes.FOOD, options);
   }
   
   public async getAllRecipes(options: PouchDB.Find.FindRequest<Recipe> = {}): Promise<Recipe[]> {
-    return this.getByType<Recipe>(documentTypes.recipe, options);
+    return this.getByType<Recipe>(DocumentTypes.RECIPE, options);
   }
   
   public async getAllMenus(options: PouchDB.Find.FindRequest<Menu> = {}): Promise<Menu[]> {
-    return this.getByType<Menu>(documentTypes.menu, options);
+    return this.getByType<Menu>(DocumentTypes.MENU, options);
   }
 
   // Get database information

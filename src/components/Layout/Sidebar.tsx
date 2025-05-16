@@ -6,9 +6,9 @@ const Sidebar = () => {
   // Define navigation items
   const navItems = [
     { to: '/', icon: 'dashboard', text: 'Dashboard' },
-    { to: '/foods', icon: 'apple', text: 'Foods' },
-    { to: '/recipes', icon: 'bowl', text: 'Recipes' },
-    { to: '/menus', icon: 'calendar', text: 'Menus' },
+    { to: '/foods', icon: 'nutrition', text: 'Foods' },
+    { to: '/recipes', icon: 'restaurant_menu', text: 'Recipes' },
+    { to: '/menus', icon: 'menu_book', text: 'Menus' },
   ];
   
   // Check if path is active
