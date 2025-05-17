@@ -5,7 +5,7 @@ import foodService from '../../services/foodService';
 import recipeService from '../../services/recipeService';
 import menuService from '../../services/menuService';
 import db from '../../services/db';
-import { useDatabase } from '../../contexts/DatabaseContext';
+import { useDatabase } from '../../hooks/useDatabase';
 
 const Dashboard = () => {
   const { isOnline, isSyncing } = useDatabase();

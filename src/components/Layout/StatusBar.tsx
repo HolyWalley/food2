@@ -1,4 +1,4 @@
-import { useDatabase } from '../../contexts/DatabaseContext';
+import { useDatabase } from '../../hooks/useDatabase';
 
 const StatusBar = () => {
   const { isOnline, isSyncing, syncError } = useDatabase();

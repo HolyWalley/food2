@@ -1,26 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import db from '../services/db';
-
-// Define the context interface
-interface DatabaseContextType {
-  isLoading: boolean;
-  isOnline: boolean;
-  isSyncing: boolean;
-  syncError: string | null;
-  setupSync: (remoteUrl: string) => void;
-  stopSync: () => void;
-}
-
-// Create the context with a default value
-const DatabaseContext = createContext<DatabaseContextType>({
-  isLoading: true,
-  isOnline: navigator.onLine,
-  isSyncing: false,
-  syncError: null,
-  setupSync: () => {},
-  stopSync: () => {}
-});
+import { DatabaseContext } from './databaseContextDefinition';
 
 // Create a provider component
 export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
@@ -122,7 +103,5 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Create a custom hook to use the database context
-export const useDatabase = () => useContext(DatabaseContext);
-
-export default DatabaseContext;
+// The useDatabase hook is now in a separate file
+export { DatabaseContext } from './databaseContextDefinition';

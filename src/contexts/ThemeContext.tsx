@@ -1,12 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-
-type ThemeContextType = {
-  darkMode: boolean;
-  toggleDarkMode: () => void;
-};
-
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+import { ThemeContext } from './themeContextDefinition';
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   // Check if user has previously set a preference in localStorage
@@ -56,10 +50,4 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
+// The useTheme hook is now in a separate file

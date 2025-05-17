@@ -3,7 +3,7 @@ import ReactSelect, { components } from 'react-select';
 // We don't use GroupBase directly
 // import type { GroupBase } from 'react-select';
 import { useDebounce } from '../../hooks/useDebounce';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { ThemeContext } from '../../contexts/themeContextDefinition';
 
 interface Option {
   value: string;

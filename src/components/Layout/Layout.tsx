@@ -3,7 +3,7 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
 import ViewTransitionsInfo from './ViewTransitionsInfo';
-import { useDatabase } from '../../contexts/DatabaseContext';
+import { useDatabase } from '../../hooks/useDatabase';
 
 const Layout = () => {
   const { isLoading } = useDatabase();
