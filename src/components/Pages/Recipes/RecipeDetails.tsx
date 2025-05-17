@@ -52,7 +52,7 @@ const RecipeDetails = () => {
 
   // Per serving nutrition
   const { data: nutritionPerServing, isLoading: nutritionPerServingLoading, error: nutritionPerServingError } = useQuery({
-    queryKey: ['recipeNutritionPerServing', id],
+    queryKey: ['recipeNutritionPerServing', id, recipe?.servings],
     queryFn: () => (recipe ? recipeService.calculateNutritionPerServing(recipe) : Promise.reject('No recipe')),
     enabled: !!recipe && !nutritionError, // Only calculate per-serving if total nutrition succeeded
     retry: 1,
@@ -68,6 +68,15 @@ const RecipeDetails = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       navigate('/recipes');
+    }
+  });
+  
+  // Update servings mutation
+  const updateServingsMutation = useMutation({
+    mutationFn: (updatedRecipe: Recipe) => recipeService.updateRecipe(updatedRecipe),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipe', id] });
     }
   });
 
@@ -150,7 +159,50 @@ const RecipeDetails = () => {
         {/* Recipe info */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="p-3 border border-gray-100 dark:border-gray-700 rounded text-center">
-            <div className="text-sm font-semibold dark:text-gray-200">{recipe.servings}</div>
+            <div className="flex items-center justify-center space-x-2">
+              <button 
+                type="button"
+                onClick={() => {
+                  if (recipe.servings > 1) {
+                    const updatedRecipe = {...recipe, servings: recipe.servings - 1};
+                    queryClient.setQueryData(['recipe', id], updatedRecipe);
+                  }
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                disabled={recipe.servings <= 1}
+              >
+                <span className="material-symbols-outlined text-sm">remove</span>
+              </button>
+              <div className="text-sm font-semibold dark:text-gray-200">{recipe.servings}</div>
+              <button 
+                type="button"
+                onClick={() => {
+                  const updatedRecipe = {...recipe, servings: recipe.servings + 1};
+                  queryClient.setQueryData(['recipe', id], updatedRecipe);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <span className="material-symbols-outlined text-sm">add</span>
+              </button>
+            </div>
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (recipe._rev) {
+                    const updatedRecipe = {
+                      ...recipe,
+                      updatedAt: new Date().toISOString()
+                    };
+                    updateServingsMutation.mutate(updatedRecipe);
+                  }
+                }}
+                className="text-xs text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+                disabled={updateServingsMutation.isPending}
+              >
+                {updateServingsMutation.isPending ? 'Saving...' : 'Save'}
+              </button>
+            </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Servings</div>
           </div>
           
