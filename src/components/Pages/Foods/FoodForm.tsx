@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
-import { Select } from '../../../components/UI';
+import { Select, FoodSearch } from '../../../components/UI';
 import type { Food, NutritionInfo, ServingInfo } from '../../../types';
+import type { FoodData } from '../../../components/UI/FoodSearch';
 
 const FoodForm = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ const FoodForm = () => {
   const [newTag, setNewTag] = useState('');
   const [newAllergen, setNewAllergen] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [showNutritionixSearch, setShowNutritionixSearch] = useState(!isEditMode);
   
   // Calculate calories from macros in real-time
   const calculatedCalories = useMemo(() => {
@@ -196,6 +198,31 @@ const FoodForm = () => {
   const removeAllergen = (allergen: string) => {
     setAllergens(allergens.filter(a => a !== allergen));
   };
+  
+  // Handle food selection from Nutritionix
+  const handleFoodSelect = (foodData: FoodData) => {
+    setName(foodData.name);
+    setCategory(foodData.category);
+    setServingSize(foodData.serving.size);
+    setServingUnit(foodData.serving.unit);
+    setProtein(foodData.nutrients.protein);
+    setCarbs(foodData.nutrients.carbs);
+    setFat(foodData.nutrients.fat);
+    
+    // Set optional nutrients if available
+    if (foodData.nutrients.fiber !== undefined) setFiber(foodData.nutrients.fiber);
+    if (foodData.nutrients.sugar !== undefined) setSugar(foodData.nutrients.sugar);
+    if (foodData.nutrients.sodium !== undefined) setSodium(foodData.nutrients.sodium);
+    if (foodData.nutrients.cholesterol !== undefined) setCholesterol(foodData.nutrients.cholesterol);
+    
+    // Hide the search after selection
+    setShowNutritionixSearch(false);
+    
+    // Add food name as a tag if not already present
+    if (!tags.includes(foodData.name.toLowerCase())) {
+      setTags([...tags, foodData.name.toLowerCase()]);
+    }
+  };
 
   if (isEditMode && isLoading) {
     return (
@@ -225,6 +252,41 @@ const FoodForm = () => {
           {/* Basic Information */}
           <div>
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Basic Information</h2>
+            
+            {showNutritionixSearch && (
+              <div className="mb-4 bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border border-primary-100 dark:border-primary-800">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-md font-medium text-primary-800 dark:text-primary-300">
+                    Search food database
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowNutritionixSearch(false)}
+                    className="text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                </div>
+                <p className="text-sm text-primary-600 dark:text-primary-400 mb-3">
+                  Search for foods to automatically fill in nutritional information
+                </p>
+                <FoodSearch onFoodSelect={handleFoodSelect} />
+              </div>
+            )}
+            
+            {!showNutritionixSearch && (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNutritionixSearch(true)}
+                  className="btn btn-secondary inline-flex items-center text-sm"
+                >
+                  <span className="material-symbols-outlined mr-1 text-sm">search</span>
+                  Search food database
+                </button>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="name" className="form-label dark:text-gray-300">Name</label>

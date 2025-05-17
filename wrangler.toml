@@ -1,46 +1,18 @@
 # Wrangler configuration for Cloudflare
 
 name = "food-planning-app"
-main = "dist/worker.js"
-compatibility_date = "2024-05-16"
-
-# Define the build configuration for the application
-[build]
-command = "npm run build"
-upload.format = "service-worker"
-watch_dir = "src"
-
-# Define routes to match incoming requests to the Cloudflare Functions
-[[routes]]
-pattern = "/api/validate-food"
-script = "functions/validate-food.js"
-
-[[routes]]
-pattern = "/*"
-script = "functions/static-files.js"
+main = "worker.js"
+compatibility_date = "2025-05-17"
 
 # Environment variables (replace with actual values in production)
 [vars]
 ENVIRONMENT = "development"
 
-# Define environment-specific configurations
-[env.production]
-# Production-specific routes or vars if needed
-# Add your own custom domain for production
-routes = [
-  { pattern = "example.com/*", script = "functions/static-files.js" }
-]
-
-[env.production.vars]
-ENVIRONMENT = "production"
-
-# Configure KV Namespaces for the Workers if needed
-# [kv_namespaces]
-# MY_KV = { binding = "MY_KV", id = "your-kv-namespace-id" }
-
-# Configure Cloudflare D1 Database if needed
-# [d1_databases]
-# MY_DB = { binding = "MY_DB", database_name = "my-db", database_id = "your-db-id" }
+# Configure KV Namespaces for the Workers
+[[kv_namespaces]]
+binding = "FOOD_CACHE"
+id = "827d95bee0d84beca2fef6badd4ac3b1"
+preview_id = "0016d5076d8b4ce9bb33447b06b9d6ac"
 
 # Configure dev build for local development testing
 [dev]
