@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
@@ -48,6 +48,27 @@ const MenuForm = () => {
   const { data: recipes, isLoading: recipesLoading } = useQuery({
     queryKey: ['recipes'],
     queryFn: recipeService.getAllRecipes
+  });
+
+  // Create a temporary menu object for nutrition calculation
+  const tempMenu = useMemo(() => {
+    return {
+      _id: 'temp_menu',
+      type: 'menu' as const,
+      name,
+      description,
+      items,
+      tags,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }, [name, description, items, tags]);
+
+  // Calculate nutrition for the current menu items
+  const { data: nutrition, isLoading: nutritionLoading } = useQuery({
+    queryKey: ['menuNutrition', items],
+    queryFn: () => items.length > 0 ? menuService.calculateMenuNutrition(tempMenu) : Promise.resolve(null),
+    enabled: items.length > 0
   });
 
   // Create mutation
@@ -146,9 +167,11 @@ const MenuForm = () => {
       return;
     }
 
-    console.log('Adding item:', newItem);
+    // Clear any previous errors
+    setError(null);
+    
+    // Add the new item to the menu
     const updatedItems = [...items, { ...newItem }];
-    console.log('Updated items:', updatedItems);
     setItems(updatedItems);
     
     // Reset new item form
@@ -157,6 +180,9 @@ const MenuForm = () => {
       itemId: '',
       portions: 1
     });
+    
+    // Force refetch of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['menuNutrition'] });
   };
 
   // Remove an item from the menu
@@ -164,6 +190,9 @@ const MenuForm = () => {
     const updatedItems = [...items];
     updatedItems.splice(index, 1);
     setItems(updatedItems);
+    
+    // Force refetch of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['menuNutrition'] });
   };
 
   // Add a tag
@@ -266,6 +295,78 @@ const MenuForm = () => {
 
           </div>
 
+          {/* Nutrition Overview */}
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">Nutrition Overview</h2>
+            {items.length === 0 ? (
+              <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded">
+                <p className="text-gray-500 dark:text-gray-400">Add items to see nutritional information.</p>
+              </div>
+            ) : nutritionLoading ? (
+              <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div className="animate-pulse">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, index) => (
+                      <div key={index} className="h-16 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Calculating nutrition...</p>
+              </div>
+            ) : nutrition ? (
+              <div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-green-700 dark:text-green-300">{Math.round(nutrition.calories)}</div>
+                    <div className="text-sm text-green-600 dark:text-green-400">Calories</div>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{nutrition.protein.toFixed(1)}g</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">Protein</div>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{nutrition.carbs.toFixed(1)}g</div>
+                    <div className="text-sm text-amber-600 dark:text-amber-400">Carbohydrates</div>
+                  </div>
+                  <div className="bg-rose-50 dark:bg-rose-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-rose-700 dark:text-rose-300">{nutrition.fat.toFixed(1)}g</div>
+                    <div className="text-sm text-rose-600 dark:text-rose-400">Fat</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {nutrition.fiber !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{nutrition.fiber.toFixed(1)}g</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Fiber</div>
+                    </div>
+                  )}
+                  {nutrition.sugar !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{nutrition.sugar.toFixed(1)}g</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Sugar</div>
+                    </div>
+                  )}
+                  {nutrition.sodium !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{nutrition.sodium.toFixed(0)}mg</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Sodium</div>
+                    </div>
+                  )}
+                  {nutrition.cholesterol !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{nutrition.cholesterol.toFixed(0)}mg</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Cholesterol</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded">
+                <p className="text-gray-500 dark:text-gray-400">Could not calculate nutrition information.</p>
+              </div>
+            )}
+          </div>
+          
           {/* Menu items section */}
           <div className="border-t border-b border-gray-200 dark:border-gray-700 py-6">
             <h2 className="text-lg font-medium mb-4 text-gray-800 dark:text-gray-200">Menu Items</h2>
