@@ -294,6 +294,13 @@ export class FoodService {
       'small': { 'g': 0.7 }, // Will be treated as 0.7x the serving size
       'large': { 'g': 1.3 }, // Will be treated as 1.3x the serving size
       'clove': { 'g': 1 },   // Clove of garlic will be treated as 1x the serving size
+      'piece': { 'g': 1 },   // Will be treated as 1x the serving size
+      'serving': { 'g': 1 }, // Will be treated as 1x the serving size
+      'slice': { 'g': 1 },   // Will be treated as 1x the serving size
+      'can': { 'g': 1 },     // Will be treated as 1x the serving size
+      'bottle': { 'g': 1 },  // Will be treated as 1x the serving size
+      'packet': { 'g': 1 },  // Will be treated as 1x the serving size
+      'container': { 'g': 1 } // Will be treated as 1x the serving size
     };
 
     // Check if we're converting from a size descriptor (e.g., "medium", "clove") to a weight

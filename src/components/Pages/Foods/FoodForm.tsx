@@ -52,7 +52,26 @@ const FoodForm = () => {
   ];
 
   // Units for the dropdown
-  const units = ['g', 'ml', 'oz', 'cup', 'tbsp', 'tsp', 'piece'];
+  const units = [
+    // Weight units
+    'g', 'kg', 'oz', 'lb',
+    // Volume units
+    'ml', 'l', 'cup', 'tbsp', 'tsp', 
+    // Count units
+    'piece', 'serving',
+    // Size descriptors
+    'small', 'medium', 'large',
+    // Common food units
+    'clove', 'slice', 'can', 'bottle', 'packet', 'container'
+  ];
+  
+  // Unit categories for grouping in select
+  const unitCategories = {
+    weight: ['g', 'kg', 'oz', 'lb'],
+    volume: ['ml', 'l', 'cup', 'tbsp', 'tsp'],
+    count: ['piece', 'serving'],
+    descriptive: ['small', 'medium', 'large', 'clove', 'slice', 'can', 'bottle', 'packet', 'container']
+  };
 
   // Fetch food data if in edit mode
   const { data: foodData, isLoading } = useQuery({
@@ -125,6 +144,12 @@ const FoodForm = () => {
 
     if (servingSize <= 0) {
       setError('Serving size must be greater than zero');
+      return;
+    }
+    
+    // Validate weight in grams for descriptive units
+    if (unitCategories.descriptive.includes(servingUnit) && (!servingWeightGrams || servingWeightGrams <= 0)) {
+      setError('Weight in grams is required for descriptive units like small, medium, large, etc.');
       return;
     }
 
@@ -355,15 +380,30 @@ const FoodForm = () => {
                   onChange={(e) => setServingUnit(e.target.value)}
                   required
                 >
-                  {units.map((unit) => (
-                    <option key={unit} value={unit}>
-                      {unit}
-                    </option>
-                  ))}
+                  <optgroup label="Weight">
+                    {unitCategories.weight.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Volume">
+                    {unitCategories.volume.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Count">
+                    {unitCategories.count.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Descriptive">
+                    {unitCategories.descriptive.map((unit) => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </optgroup>
                 </Select>
               </div>
-              {/* Only show weight in grams field if unit is not 'g' */}
-              {servingUnit !== 'g' && (
+              {/* Only show weight in grams field if unit is not a weight unit */}
+              {!unitCategories.weight.includes(servingUnit) && (
                 <div>
                   <label htmlFor="servingWeightGrams" className="form-label dark:text-gray-300">
                     Weight in Grams
@@ -384,7 +424,13 @@ const FoodForm = () => {
                     }
                     min="0"
                     step="0.1"
+                    required={unitCategories.descriptive.includes(servingUnit)}
                   />
+                  {unitCategories.descriptive.includes(servingUnit) && (
+                    <div className="text-xs text-primary-600 dark:text-primary-400 mt-1">
+                      Weight in grams is required for descriptive units like small, medium, large, etc.
+                    </div>
+                  )}
                 </div>
               )}
             </div>

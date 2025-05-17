@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { mapNutritionixUnit } from '../../utils/nutritionixUtils';
 import { useDebounce } from '../../hooks/useDebounce';
 import type { NutritionInfo, ServingInfo } from '../../types';
 
@@ -154,9 +155,8 @@ const FoodSearch: React.FC<FoodSearchProps> = ({
         },
         serving: {
           size: nutritionixFood.serving_qty,
-          unit: nutritionixFood.serving_unit,
-          weightInGrams: nutritionixFood.serving_weight_grams,
-          isStandard: false // Raw data from API is not standardized
+          unit: mapNutritionixUnit(nutritionixFood.serving_unit, nutritionixFood.food_name),
+          weightInGrams: nutritionixFood.serving_weight_grams
         },
         // Make a best guess at the category based on Nutritionix data
         category: nutritionixFood.food_name.includes('chicken') || nutritionixFood.food_name.includes('beef') 
@@ -225,7 +225,7 @@ const FoodSearch: React.FC<FoodSearchProps> = ({
               nf_total_fat: 1,
               serving_qty: 1,
               serving_unit: 'medium',
-              serving_weight_grams: 100,
+              serving_weight_grams: 150, // Ensure we have a realistic weight for a medium item
             }
           ]
         };
