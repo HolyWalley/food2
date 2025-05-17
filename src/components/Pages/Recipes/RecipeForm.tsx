@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
@@ -162,10 +162,48 @@ const RecipeForm = () => {
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [instructions, setInstructions] = useState<string[]>(['']);
 
-  // For debugging
-  useEffect(() => {
-    console.log('Ingredients state updated:', ingredients);
-  }, [ingredients]);
+  // Calculate nutrition for the current recipe
+  const { data: nutrition, isLoading: nutritionLoading } = useQuery({
+    queryKey: ['recipeNutrition', ingredients],
+    queryFn: () => {
+      if (ingredients.length === 0) return Promise.resolve(null);
+      
+      // Create a temporary recipe object for nutrition calculation
+      const tempRecipe = {
+        _id: 'temp_recipe',
+        type: 'recipe' as const,
+        name,
+        description,
+        ingredients,
+        instructions,
+        servings,
+        prepTime,
+        cookTime,
+        tags,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      return recipeService.calculateRecipeNutrition(tempRecipe);
+    },
+    enabled: ingredients.length > 0
+  });
+  
+  // Calculate per-serving nutrition
+  const perServingNutrition = useMemo(() => {
+    if (!nutrition || servings <= 0) return null;
+    
+    return {
+      calories: Math.round(nutrition.calories / servings),
+      protein: parseFloat((nutrition.protein / servings).toFixed(1)),
+      carbs: parseFloat((nutrition.carbs / servings).toFixed(1)),
+      fat: parseFloat((nutrition.fat / servings).toFixed(1)),
+      fiber: nutrition.fiber ? parseFloat((nutrition.fiber / servings).toFixed(1)) : undefined,
+      sugar: nutrition.sugar ? parseFloat((nutrition.sugar / servings).toFixed(1)) : undefined,
+      sodium: nutrition.sodium ? parseFloat((nutrition.sodium / servings).toFixed(0)) : undefined,
+      cholesterol: nutrition.cholesterol ? parseFloat((nutrition.cholesterol / servings).toFixed(0)) : undefined
+    };
+  }, [nutrition, servings]);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -287,9 +325,10 @@ const RecipeForm = () => {
       return;
     }
 
-    console.log('Adding ingredient:', newIngredient);
+    // Clear any previous errors
+    setError(null);
+    
     const updatedIngredients = [...ingredients, { ...newIngredient }];
-    console.log('Updated ingredients:', updatedIngredients);
     setIngredients(updatedIngredients);
 
     // Reset new ingredient form
@@ -298,11 +337,17 @@ const RecipeForm = () => {
       quantity: 1,
       unit: 'g'
     });
+    
+    // Force refresh of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
 
   // Remove an ingredient
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
+    
+    // Force refresh of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
 
   // Update an ingredient's quantity
@@ -317,6 +362,9 @@ const RecipeForm = () => {
     };
     
     setIngredients(updatedIngredients);
+    
+    // Force refresh of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
 
   // Update an ingredient's unit
@@ -328,6 +376,9 @@ const RecipeForm = () => {
     };
     
     setIngredients(updatedIngredients);
+    
+    // Force refresh of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
   
   // Handle quantity input change
@@ -662,9 +713,14 @@ const RecipeForm = () => {
                 <input
                   id="servings"
                   type="number"
-                  className="form-input"
+                  className="form-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={servings}
-                  onChange={(e) => setServings(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const newValue = parseInt(e.target.value);
+                    if (!isNaN(newValue) && newValue > 0) {
+                      setServings(newValue);
+                    }
+                  }}
                   min="1"
                   required
                 />
@@ -694,6 +750,86 @@ const RecipeForm = () => {
             </div>
           </div>
 
+          {/* Nutrition Overview */}
+          <div>
+            <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Nutrition Overview</h2>
+            {ingredients.length === 0 ? (
+              <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded mb-6">
+                <p className="text-gray-500 dark:text-gray-400">Add ingredients to see nutritional information.</p>
+              </div>
+            ) : nutritionLoading ? (
+              <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg mb-6">
+                <div className="animate-pulse">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, index) => (
+                      <div key={index} className="h-16 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Calculating nutrition...</p>
+              </div>
+            ) : perServingNutrition ? (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-md font-medium text-gray-700 dark:text-gray-300">Per Serving ({servings} servings)</h3>
+                  {nutrition && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Total: {Math.round(nutrition.calories)} calories
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-green-700 dark:text-green-300">{perServingNutrition.calories}</div>
+                    <div className="text-sm text-green-600 dark:text-green-400">Calories</div>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{perServingNutrition.protein}g</div>
+                    <div className="text-sm text-blue-600 dark:text-blue-400">Protein</div>
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{perServingNutrition.carbs}g</div>
+                    <div className="text-sm text-amber-600 dark:text-amber-400">Carbohydrates</div>
+                  </div>
+                  <div className="bg-rose-50 dark:bg-rose-900/30 p-4 rounded-lg">
+                    <div className="text-lg font-bold text-rose-700 dark:text-rose-300">{perServingNutrition.fat}g</div>
+                    <div className="text-sm text-rose-600 dark:text-rose-400">Fat</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {perServingNutrition.fiber !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{perServingNutrition.fiber}g</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Fiber</div>
+                    </div>
+                  )}
+                  {perServingNutrition.sugar !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{perServingNutrition.sugar}g</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Sugar</div>
+                    </div>
+                  )}
+                  {perServingNutrition.sodium !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{perServingNutrition.sodium}mg</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Sodium</div>
+                    </div>
+                  )}
+                  {perServingNutrition.cholesterol !== undefined && (
+                    <div className="p-3 border border-gray-100 dark:border-gray-700 rounded">
+                      <div className="text-sm font-semibold dark:text-gray-200">{perServingNutrition.cholesterol}mg</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Cholesterol</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded mb-6">
+                <p className="text-gray-500 dark:text-gray-400">Could not calculate nutrition information.</p>
+              </div>
+            )}
+          </div>
+          
           {/* Ingredients */}
           <div>
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Ingredients</h2>

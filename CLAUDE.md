@@ -57,5 +57,5 @@ A food planning web app that allows users to:
 ## Local Development
 1. Clone repository
 2. Run `npm install`
-3. Create `.env.local` file with required environment variables
+3. Create `.dev.vars` file with required environment variables
 4. Run `npm run dev` to start local development server

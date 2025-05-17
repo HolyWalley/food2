@@ -14,11 +14,11 @@ const FoodDetails = () => {
     queryFn: () => (id ? foodService.getFoodById(id) : Promise.reject('No ID provided')),
     enabled: !!id
   });
-  
+
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (params: { id: string; rev: string }) => 
+    mutationFn: (params: { id: string; rev: string }) =>
       foodService.deleteFood(params.id, params.rev),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['foods'] });
@@ -29,7 +29,7 @@ const FoodDetails = () => {
   // Handle delete
   const handleDelete = () => {
     if (!food) return;
-    
+
     if (window.confirm('Are you sure you want to delete this food item?')) {
       deleteMutation.mutate({ id: food._id, rev: food._rev || '' });
     }
@@ -65,8 +65,8 @@ const FoodDetails = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300">Food Not Found</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">The food item you're looking for doesn't exist or has been deleted.</p>
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="btn btn-primary mt-6"
         >
           Go Back
@@ -78,7 +78,7 @@ const FoodDetails = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-6">
-        <button 
+        <button
           onClick={async () => {
             await withViewTransition(() => {
               // Use browser history to navigate back
@@ -91,12 +91,12 @@ const FoodDetails = () => {
           <span className="align-middle ml-1">Back</span>
         </button>
       </div>
-      
+
       {/* Grid layout to match the food list for smoother transitions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Main card with view transition */}
         <div className="col-span-1 sm:col-span-2 lg:col-span-3">
-          <div 
+          <div
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden mb-4"
             style={{ viewTransitionName: `food-card-container-${food._id}` }}
           >
@@ -104,20 +104,20 @@ const FoodDetails = () => {
               <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
                 <div>
                   <div className="flex items-center">
-                    <h1 
+                    <h1
                       className="text-2xl font-bold text-gray-800 dark:text-gray-200"
                       style={{ viewTransitionName: `food-title-${food._id}` }}
                     >
                       {food.name}
                     </h1>
-                    <span 
+                    <span
                       className="ml-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm px-3 py-1 rounded"
                       style={{ viewTransitionName: `food-category-${food._id}` }}
                     >
                       {food.category}
                     </span>
                   </div>
-                  <p 
+                  <p
                     className="text-gray-600 dark:text-gray-400 mt-1"
                     style={{ viewTransitionName: `food-serving-${food._id}` }}
                   >
@@ -127,12 +127,12 @@ const FoodDetails = () => {
                     )}
                   </p>
                 </div>
-                
+
                 <div className="flex space-x-3 mt-4 md:mt-0">
                   <Link to={`/foods/${food._id}/edit`} className="btn btn-secondary">
                     Edit
                   </Link>
-                  <button 
+                  <button
                     className="btn bg-red-500 text-white hover:bg-red-600"
                     onClick={handleDelete}
                     disabled={deleteMutation.isPending}
@@ -144,7 +144,7 @@ const FoodDetails = () => {
 
               <div className="mb-6">
                 <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Nutritional Information</h2>
-                <div 
+                <div
                   className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
                   style={{ viewTransitionName: `food-nutrients-${food._id}` }}
                 >
@@ -154,7 +154,7 @@ const FoodDetails = () => {
                     </div>
                     <div className="text-sm text-green-600 dark:text-green-400">
                       Calories
-                      <span 
+                      <span
                         className="ml-1 inline-flex items-center text-green-500 dark:text-green-400 cursor-help"
                         title="Calculated using 4 cal/g for protein and carbs, 9 cal/g for fat"
                       >
@@ -224,7 +224,7 @@ const FoodDetails = () => {
               {food.tags && food.tags.length > 0 && (
                 <div>
                   <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Tags</h2>
-                  <div 
+                  <div
                     className="flex flex-wrap gap-2"
                     style={{ viewTransitionName: `food-tags-${food._id}` }}
                   >
