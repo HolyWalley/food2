@@ -1,8 +1,15 @@
 # Wrangler configuration for Cloudflare
 
 name = "food-planning-app"
-main = "worker.js"
 compatibility_date = "2025-05-17"
+
+# Using Cloudflare Pages Functions
+[build]
+command = "echo 'No build needed for functions-only deployment'"
+
+# Functions configuration
+[functions]
+directory = "functions"
 
 # Environment variables (replace with actual values in production)
 [vars]

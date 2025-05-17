@@ -1,52 +1,38 @@
 /**
- * Generate a recipe using AI and search for ingredients
- * 
- * This function:
- * 1. Calls OpenAI to generate a structured recipe
- * 2. Searches for each ingredient in Nutritionix
- * 3. Returns the recipe with nutritional information
+ * Recipe generation API endpoint
+ * Generates recipe using OpenAI and processes ingredients with Nutritionix
  */
-
-export async function onRequest(context) {
-  const { request, env } = context;
-  
-  // CORS headers
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-  };
-  
-  // Handle preflight requests
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers });
-  }
-  
-  // Only allow POST requests
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers
-    });
-  }
-  
-  // Check for API credentials
-  if (!env.OPENAI_API_KEY) {
-    return new Response(JSON.stringify({ error: 'OpenAI API credentials not configured' }), {
-      status: 500,
-      headers
-    });
-  }
-  
-  if (!env.NUTRITIONIX_APP_ID || !env.NUTRITIONIX_API_KEY) {
-    return new Response(JSON.stringify({ error: 'Nutritionix API credentials not configured' }), {
-      status: 500,
-      headers
-    });
-  }
-  
+export async function onRequest({ request, env }) {
   try {
+    // Only allow POST requests
+    if (request.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    
+    // Check for API credentials
+    if (!env.OPENAI_API_KEY) {
+      return new Response(JSON.stringify({ error: 'OpenAI API credentials not configured' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    
+    if (!env.NUTRITIONIX_APP_ID || !env.NUTRITIONIX_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Nutritionix API credentials not configured' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+    
     // Parse request body
     let params = {};
     try {
@@ -62,7 +48,9 @@ export async function onRequest(context) {
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
       return new Response(JSON.stringify({ error: 'Recipe prompt is required' }), {
         status: 400,
-        headers
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
     }
     
@@ -87,7 +75,11 @@ export async function onRequest(context) {
       processedIngredients
     };
     
-    return new Response(JSON.stringify(completeRecipe), { headers });
+    return new Response(JSON.stringify(completeRecipe), {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
     
   } catch (error) {
     console.error('Error generating recipe:', error);
@@ -97,7 +89,9 @@ export async function onRequest(context) {
       details: error.message
     }), {
       status: 500,
-      headers
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
   }
 }
@@ -237,9 +231,12 @@ async function processIngredients(ingredients, appId, appKey, cache) {
       const cacheKey = `recipe-ingredient:${query.toLowerCase()}`;
       
       // Check cache first
-      const cachedData = await cache.get(cacheKey);
-      if (cachedData) {
-        return JSON.parse(cachedData);
+      let cachedData;
+      if (cache) {
+        cachedData = await cache.get(cacheKey);
+        if (cachedData) {
+          return JSON.parse(cachedData);
+        }
       }
       
       // Call Nutritionix API to get nutrient data
@@ -310,8 +307,10 @@ async function processIngredients(ingredients, appId, appKey, cache) {
         processedIngredient.food.altMeasures = foodData.alt_measures;
       }
       
-      // Store in cache (expires after 30 days)
-      await cache.put(cacheKey, JSON.stringify(processedIngredient), { expirationTtl: 2592000 });
+      // Store in cache if available
+      if (cache) {
+        await cache.put(cacheKey, JSON.stringify(processedIngredient), { expirationTtl: 2592000 });
+      }
       
       return processedIngredient;
     } catch (error) {
@@ -376,6 +375,10 @@ function mapNutritionixUnit(nutritionixUnit, foodName) {
     'box': 'container',
   };
   
+  if (!nutritionixUnit) {
+    return 'piece';
+  }
+  
   const lowerUnit = nutritionixUnit.toLowerCase();
   
   // First try direct mapping
@@ -407,6 +410,8 @@ function mapNutritionixUnit(nutritionixUnit, foodName) {
  * Determine a food category based on its name
  */
 function determineFoodCategory(foodName) {
+  if (!foodName) return 'Other';
+  
   const name = foodName.toLowerCase();
   
   // Protein foods
@@ -446,27 +451,6 @@ function determineFoodCategory(foodName) {
       name.includes('yogurt') || name.includes('butter') ||
       name.includes('cream') || name.includes('dairy')) {
     return 'Dairy';
-  }
-  
-  // Oils and Fats
-  if (name.includes('oil') || name.includes('fat') ||
-      name.includes('butter') || name.includes('lard')) {
-    return 'Oils & Fats';
-  }
-  
-  // Nuts and Seeds
-  if (name.includes('nut') || name.includes('seed') ||
-      name.includes('almond') || name.includes('walnut') ||
-      name.includes('peanut') || name.includes('cashew')) {
-    return 'Nuts & Seeds';
-  }
-  
-  // Herbs and Spices
-  if (name.includes('herb') || name.includes('spice') ||
-      name.includes('pepper') || name.includes('salt') ||
-      name.includes('cinnamon') || name.includes('basil') ||
-      name.includes('oregano') || name.includes('thyme')) {
-    return 'Herbs & Spices';
   }
   
   // Default category

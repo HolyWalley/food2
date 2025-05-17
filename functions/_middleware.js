@@ -1,35 +1,30 @@
-// Global middleware to log requests and handle CORS
-export async function onRequest({ request, next, env }) {
-  console.log(`Handling request to ${request.url}`);
+/**
+ * Middleware for Cloudflare Pages Functions
+ * Adds CORS headers to all responses
+ */
+export async function onRequest({ request, next }) {
+  // Define CORS headers to add to all responses
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
 
-  // Add CORS headers for API requests
-  const url = new URL(request.url);
-  const isApiRequest = url.pathname.startsWith('/api/');
-
-  if (isApiRequest) {
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    };
-
-    // For OPTIONS requests (preflight), just return the headers
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-
-    // For other requests, continue to the actual handler but add CORS headers
-    const response = await next();
-    const newResponse = new Response(response.body, response);
-    
-    // Add CORS headers to the response
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      newResponse.headers.set(key, value);
+  // Handle CORS preflight requests
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders
     });
-    
-    return newResponse;
   }
 
-  // For non-API requests, just pass through without modification
-  return next();
+  // Process the request through the next handler
+  const response = await next();
+  
+  // Add CORS headers to the response
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  // Return the modified response
+  return response;
 }
