@@ -3,7 +3,7 @@
  */
 
 // List of standard units supported by our app
-const standardUnits = [
+export const standardUnits = [
   // Weight units
   'g', 'kg', 'oz', 'lb',
   // Volume units
@@ -15,6 +15,14 @@ const standardUnits = [
   // Common food units
   'clove', 'slice', 'can', 'bottle', 'packet', 'container'
 ];
+
+// Unit categories for grouping in select
+export const unitCategories = {
+  weight: ['g', 'kg', 'oz', 'lb'],
+  volume: ['ml', 'l', 'cup', 'tbsp', 'tsp'],
+  count: ['piece', 'serving'],
+  descriptive: ['small', 'medium', 'large', 'clove', 'slice', 'can', 'bottle', 'packet', 'container']
+};
 
 // Common Nutritionix unit mappings
 const unitMappings: Record<string, string> = {

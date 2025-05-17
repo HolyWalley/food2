@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
 import foodService from '../../../services/foodService';
 import { Select } from '../../../components/UI';
+import { unitCategories, standardUnits } from '../../../utils/nutritionixUtils';
 import type { Recipe, RecipeIngredient, Food } from '../../../types';
 
 const RecipeForm = () => {
@@ -339,9 +340,19 @@ const RecipeForm = () => {
                       const food = foods?.find(f => f._id === ingredient.foodId);
                       return (
                         <li key={index} className="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md">
-                          <span className="dark:text-gray-200 font-medium">
-                            {ingredient.quantity} {ingredient.unit} {food?.name || ingredient.foodId}
-                          </span>
+                          <div className="flex items-center">
+                            <span className="dark:text-gray-200 font-medium">
+                              {ingredient.quantity} {ingredient.unit} 
+                            </span>
+                            <span className="ml-1 dark:text-gray-300">
+                              of {food?.name || ingredient.foodId}
+                            </span>
+                            {food?.serving?.weightInGrams && food?.serving?.unit !== 'g' && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                ({food.serving.unit}: {food.serving.weightInGrams}g)
+                              </span>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeIngredient(index)}
@@ -366,7 +377,17 @@ const RecipeForm = () => {
                     id="foodId"
                     label="Food"
                     value={newIngredient.foodId}
-                    onChange={(e) => setNewIngredient({...newIngredient, foodId: e.target.value})}
+                    onChange={(e) => {
+                      const selectedFoodId = e.target.value;
+                      const selectedFood = foods?.find(f => f._id === selectedFoodId);
+                      
+                      // Update with the selected food ID and set the unit to match the food's unit if available
+                      setNewIngredient({
+                        ...newIngredient, 
+                        foodId: selectedFoodId,
+                        unit: selectedFood?.serving?.unit || 'g' // Default to 'g' if no unit found
+                      });
+                    }}
                     disabled={foodsLoading}
                   >
                     <option value="">Select a food...</option>
@@ -391,16 +412,67 @@ const RecipeForm = () => {
                 </div>
                 <div>
                   <label htmlFor="unit" className="form-label dark:text-gray-300">Unit</label>
-                  <input
+                  <Select
                     id="unit"
-                    type="text"
-                    className="form-input"
                     value={newIngredient.unit}
                     onChange={(e) => setNewIngredient({...newIngredient, unit: e.target.value})}
-                    placeholder="g, ml, cup, etc."
-                  />
+                    helpText={newIngredient.foodId && (() => {
+                      const selectedFood = foods?.find(f => f._id === newIngredient.foodId);
+                      if (selectedFood?.serving.unit !== newIngredient.unit) {
+                        return `Food serving unit is ${selectedFood?.serving.unit}`;
+                      }
+                      return '';
+                    })()}
+                  >
+                    <optgroup label="Weight">
+                      {unitCategories.weight.map((unit) => (
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Volume">
+                      {unitCategories.volume.map((unit) => (
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Count">
+                      {unitCategories.count.map((unit) => (
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Descriptive">
+                      {unitCategories.descriptive.map((unit) => (
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </optgroup>
+                  </Select>
                 </div>
               </div>
+              {/* Information about the selected food */}
+              {newIngredient.foodId && (
+                <div className="mt-3 bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                  {(() => {
+                    const selectedFood = foods?.find(f => f._id === newIngredient.foodId);
+                    if (!selectedFood) return null;
+                    
+                    return (
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        <p className="font-medium">{selectedFood.name}</p>
+                        <p>
+                          <span className="font-medium">Serving size:</span> {selectedFood.serving.size} {selectedFood.serving.unit}
+                          {selectedFood.serving.weightInGrams && selectedFood.serving.unit !== 'g' && (
+                            <span className="ml-1">({selectedFood.serving.weightInGrams}g)</span>
+                          )}
+                        </p>
+                        <p>
+                          <span className="font-medium">Nutritional info (per serving):</span> {selectedFood.nutrients.calories} calories, 
+                          {selectedFood.nutrients.protein}g protein, {selectedFood.nutrients.carbs}g carbs, {selectedFood.nutrients.fat}g fat
+                        </p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+              
               <div className="mt-3">
                 <button
                   type="button"
