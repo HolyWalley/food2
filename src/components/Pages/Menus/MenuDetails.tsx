@@ -71,6 +71,16 @@ const MenuDetails = () => {
       return recipe?.name || 'Unknown recipe';
     }
   };
+  
+  // Navigate to item details
+  const navigateToItemDetails = async (type: 'food' | 'recipe', id: string) => {
+    if (!id) return;
+    
+    const path = type === 'food' ? `/foods/${id}` : `/recipes/${id}`;
+    await withViewTransition(() => {
+      navigate(path);
+    });
+  };
 
   // Render loading state
   if (menuLoading) {
@@ -203,8 +213,19 @@ const MenuDetails = () => {
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {menu.items.map((item, index) => (
-                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-6 py-4 whitespace-nowrap dark:text-gray-200">{getItemName(item.type, item.itemId)}</td>
+                          <tr 
+                            key={index} 
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
+                            onClick={() => navigateToItemDetails(item.type, item.itemId)}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap dark:text-gray-200">
+                              <div className="flex items-center">
+                                <span>{getItemName(item.type, item.itemId)}</span>
+                                <span className="material-symbols-outlined text-gray-400 dark:text-gray-500 ml-1" style={{ fontSize: '1rem' }}>
+                                  open_in_new
+                                </span>
+                              </div>
+                            </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded ${
                                 item.type === 'food' 
