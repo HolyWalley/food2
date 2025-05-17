@@ -7,8 +7,11 @@ A local-first food planning web application that helps users manage nutrition da
 - **Food Database**: Create and manage food entries with nutritional information
 - **Recipe Management**: Build recipes from food ingredients with precise quantities
 - **Menu Planning**: Create daily or weekly menus from foods and recipes
+- **Shopping Lists**: Generate and manage shopping lists from menus with checkable items
 - **Local-First**: Works offline with PouchDB, sync when online
 - **Nutritional Analysis**: Automatic calculation of nutritional values for recipes and menus
+- **Dark Mode**: Support for light and dark themes
+- **View Transitions**: Smooth animations between related content using the View Transitions API
 
 ## Implementation Plan
 

@@ -1,15 +1,25 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
 import shoppingListService, { type ShoppingListItem } from '../../../services/shoppingListService';
 import { withViewTransition } from '../../../utils/viewTransition';
 
+interface CheckedItemsState {
+  [key: string]: boolean;
+}
+
 const ShoppingList = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [checkedItems, setCheckedItems] = useState<CheckedItemsState>({});
   const printRef = useRef<HTMLDivElement>(null);
+  
+  // Reset checked state on component mount (page reload)
+  useEffect(() => {
+    setCheckedItems({});
+  }, []);
 
   // Fetch menu data
   const { data: menu, isLoading: menuLoading, error: menuError } = useQuery({
@@ -57,21 +67,99 @@ const ShoppingList = () => {
   const clearAllCategories = () => {
     setSelectedCategories([]);
   };
+  
+  // Toggle checked state of an item
+  const toggleItemChecked = (itemKey: string) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [itemKey]: !prev[itemKey]
+    }));
+  };
+  
+  // Check all items in the shopping list
+  const checkAllItems = () => {
+    const newCheckedItems: CheckedItemsState = {};
+    
+    // Only check items that are currently visible (based on category filter)
+    if (filteredList) {
+      filteredList.forEach((item) => {
+        const itemKey = `${item.foodId}-${item.quantity}-${item.unit}`;
+        newCheckedItems[itemKey] = true;
+      });
+    }
+    
+    setCheckedItems(newCheckedItems);
+  };
+  
+  // Uncheck all items
+  const uncheckAllItems = () => {
+    setCheckedItems({});
+  };
 
   // Print shopping list
   const handlePrint = () => {
     if (printRef.current) {
-      const printContent = printRef.current.innerHTML;
+      // Clone the content to preserve the checkboxes' checked state
+      const printContent = printRef.current.cloneNode(true) as HTMLElement;
+      
+      // Update checkboxes in the cloned content to show their checked state
+      const checkboxes = printContent.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach((checkbox) => {
+        const checkboxElement = checkbox as HTMLInputElement;
+        const label = checkbox.nextElementSibling as HTMLElement;
+        
+        // Remove the checkbox (it won't print well) and instead use a visual indicator
+        if (checkboxElement.checked) {
+          const checkIcon = document.createElement('span');
+          checkIcon.innerHTML = '✓ ';
+          checkIcon.style.color = '#4f46e5'; // Primary color
+          checkboxElement.parentNode?.insertBefore(checkIcon, checkboxElement);
+        } else {
+          const uncheckIcon = document.createElement('span');
+          uncheckIcon.innerHTML = '□ ';
+          uncheckIcon.style.color = '#9ca3af'; // Gray color
+          checkboxElement.parentNode?.insertBefore(uncheckIcon, checkboxElement);
+        }
+        
+        // Remove the actual checkbox as it doesn't print well
+        checkboxElement.remove();
+      });
+      
+      // Store original content
       const originalContent = document.body.innerHTML;
       
+      // Set print content
       document.body.innerHTML = `
-        <div style="padding: 20px;">
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
           <h1 style="text-align: center; margin-bottom: 20px;">Shopping List${menu ? ` for ${menu.name}` : ''}</h1>
-          ${printContent}
+          <p style="text-align: center; margin-bottom: 20px; color: #666;">${
+            menu ? new Date(menu.date).toLocaleDateString(undefined, {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }) : ''
+          }</p>
+          ${printContent.outerHTML}
         </div>
       `;
       
+      // Add print styles
+      const style = document.createElement('style');
+      style.innerHTML = `
+        @media print {
+          body { font-family: Arial, sans-serif; }
+          h3 { font-size: 16px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; }
+          li { padding: 5px 0; display: flex; justify-content: space-between; }
+          .line-through { text-decoration: line-through; color: #999; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Print the document
       window.print();
+      
+      // Restore original content
       document.body.innerHTML = originalContent;
       
       // Re-render the component after printing
@@ -150,7 +238,26 @@ const ShoppingList = () => {
             </p>
           </div>
           
-          <div className="mt-4 sm:mt-0">
+          <div className="mt-4 sm:mt-0 flex items-center space-x-4">
+            {shoppingList && shoppingList.length > 0 && (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center">
+                  <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mr-2">
+                    <div 
+                      className="bg-primary-600 dark:bg-primary-500 h-2.5 rounded-full" 
+                      style={{ 
+                        width: `${shoppingList.length > 0 
+                          ? (Object.values(checkedItems).filter(Boolean).length / shoppingList.length) * 100 
+                          : 0}%` 
+                      }}
+                    ></div>
+                  </div>
+                  <span>
+                    {Object.values(checkedItems).filter(Boolean).length}/{shoppingList.length} items
+                  </span>
+                </div>
+              </div>
+            )}
             <button
               onClick={handlePrint}
               className="btn btn-primary flex items-center"
@@ -171,19 +278,36 @@ const ShoppingList = () => {
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-gray-200">Filter by Category</h2>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={selectAllCategories}
-                    className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
-                  >
-                    Select All
-                  </button>
-                  <button 
-                    onClick={clearAllCategories}
-                    className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
-                  >
-                    Clear All
-                  </button>
+                <div className="flex space-x-4">
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={selectAllCategories}
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+                    >
+                      Select All
+                    </button>
+                    <button 
+                      onClick={clearAllCategories}
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="h-4 border-r border-gray-300 dark:border-gray-600"></div>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={checkAllItems}
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+                    >
+                      Check All
+                    </button>
+                    <button 
+                      onClick={uncheckAllItems}
+                      className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+                    >
+                      Uncheck All
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -217,22 +341,64 @@ const ShoppingList = () => {
                         {category}
                       </h3>
                       <ul className="space-y-2">
-                        {categoryItems.map((item, index) => (
-                          <li 
-                            key={`${item.foodId}-${index}`}
-                            className="flex justify-between py-2"
-                          >
-                            <span className="dark:text-gray-300">{item.name}</span>
-                            <span className="text-gray-600 dark:text-gray-400 font-medium">
-                              {shoppingListService.formatQuantityAndUnit(item.quantity, item.unit)}
-                            </span>
-                          </li>
-                        ))}
+                        {categoryItems.map((item, index) => {
+                          const itemKey = `${item.foodId}-${item.quantity}-${item.unit}`;
+                          const isChecked = !!checkedItems[itemKey];
+                          
+                          return (
+                            <li 
+                              key={`${item.foodId}-${index}`}
+                              className={`flex justify-between py-2 items-center transition-colors duration-200 ${
+                                isChecked ? 'text-gray-400 dark:text-gray-500' : ''
+                              }`}
+                            >
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={itemKey}
+                                  checked={isChecked}
+                                  onChange={() => toggleItemChecked(itemKey)}
+                                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mr-3"
+                                />
+                                <label 
+                                  htmlFor={itemKey}
+                                  className={`cursor-pointer ${
+                                    isChecked 
+                                      ? 'line-through text-gray-400 dark:text-gray-500' 
+                                      : 'dark:text-gray-300'
+                                  }`}
+                                >
+                                  {item.name}
+                                </label>
+                              </div>
+                              <span className={`font-medium ${
+                                isChecked 
+                                  ? 'text-gray-400 dark:text-gray-500' 
+                                  : 'text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {shoppingListService.formatQuantityAndUnit(item.quantity, item.unit)}
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   );
                 })}
             </div>
+            
+            {/* Shopping list summary */}
+            {shoppingList && shoppingList.length > 0 && (
+              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <div>
+                  Total items: <span className="font-medium">{shoppingList.length}</span>
+                </div>
+                <div>
+                  Checked: <span className="font-medium">{Object.values(checkedItems).filter(Boolean).length}</span> | 
+                  Remaining: <span className="font-medium">{shoppingList.length - Object.values(checkedItems).filter(Boolean).length}</span>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -94,6 +94,10 @@ Cloudflare Pages will automatically deploy new versions when you push changes to
    - Creating and viewing foods
    - Creating and viewing recipes
    - Creating and viewing menus
+   - Generating and using shopping lists from menus
+   - Testing checkable shopping list functionality
+   - Dark mode toggling
+   - View transitions between related content
    - Offline functionality
    - Sync functionality (if implemented)
 
