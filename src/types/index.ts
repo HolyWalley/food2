@@ -36,6 +36,12 @@ export interface Food extends BaseDocument {
   serving: ServingInfo;
   allergens?: string[];
   tags?: string[];
+  nutritionixId?: string;  // ID from Nutritionix API for deduplication
+  commonName?: string;    // Common name from Nutritionix for matching
+  nixItemId?: string;     // Nutritionix item ID
+  nixBrandId?: string;    // Nutritionix brand ID
+  ndbNumber?: string;     // USDA database number
+  altMeasures?: any[];    // Alternative measurement options
 }
 
 // Recipe ingredient

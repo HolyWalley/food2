@@ -39,6 +39,113 @@ const IngredientFoodName = ({ foodId, foodFromList }: { foodId: string, foodFrom
   );
 };
 
+/**
+ * Find the best matching food from existing foods based on name similarity and nutrient profile.
+ * Returns the best match if similarity is above threshold, otherwise null.
+ */
+function findBestFoodMatch(existingFoods: Food[], newFood: any) {
+  // Lower threshold means easier matching
+  const SIMILARITY_THRESHOLD = 0.7;  // 70% similarity required for a match
+  const NUTRIENT_MATCH_BOOST = 0.2;  // Boost score by 20% if nutrients match closely
+  
+  if (!existingFoods || existingFoods.length === 0) {
+    return null;
+  }
+  
+  let bestMatch: Food | null = null;
+  let highestScore = 0;
+  
+  for (const food of existingFoods) {
+    // 1. Calculate name similarity (case insensitive)
+    const existingName = food.name.toLowerCase();
+    const newName = newFood.name.toLowerCase();
+    
+    // Check for exact match on nutritionixId first if available
+    if (food.nutritionixId && newFood.nutritionixId && 
+        food.nutritionixId.toLowerCase() === newFood.nutritionixId.toLowerCase()) {
+      // Direct match on nutritionixId is a perfect match
+      return food; // Immediate return with a perfect match
+    }
+    
+    // Check commonName if available (fuzzy match)
+    if (food.commonName && newFood.commonName && 
+        food.commonName.toLowerCase() === newFood.commonName.toLowerCase()) {
+      // Direct match on commonName is almost a perfect match
+      return food; // Immediate return with a very good match
+    }
+    
+    // Define stopwords to ignore in food name comparison
+    const stopwords = new Set(['and', 'or', 'the', 'a', 'an', 'of', 'in', 'with', 'without',
+                               'fresh', 'frozen', 'raw', 'cooked', 'sliced', 'chopped', 'diced',
+                               'minced', 'grated', 'shredded', 'whole', 'cut', 'pieces']);
+                               
+    // Normalize and tokenize names, removing stopwords
+    const normalizeAndTokenize = (name: string): string[] => {
+      return name.toLowerCase()
+        .replace(/[(),-\/]/g, ' ') // Replace punctuation with spaces
+        .split(/\s+/)
+        .filter(word => word.length > 1 && !stopwords.has(word));
+    };
+    
+    // Get normalized words for both food names
+    const existingWords = new Set(normalizeAndTokenize(existingName));
+    const newWords = new Set(normalizeAndTokenize(newName));
+    
+    // Check for direct name match after normalization
+    if (existingWords.size === newWords.size && 
+        [...existingWords].every(word => newWords.has(word))) {
+      return food; // Direct match after normalization
+    }
+    
+    // Calculate intersection and union for Jaccard similarity
+    const intersection = new Set([...existingWords].filter(word => newWords.has(word)));
+    const union = new Set([...existingWords, ...newWords]);
+    
+    // Name similarity score (Jaccard index)
+    let similarityScore = intersection.size / union.size;
+    
+    // 2. Check if nutrient profiles are similar (within 10% of each other)
+    const nutrientsSimilar = (
+      isNutrientSimilar(food.nutrients.calories, newFood.nutrients.calories, 0.1) &&
+      isNutrientSimilar(food.nutrients.protein, newFood.nutrients.protein, 0.1) &&
+      isNutrientSimilar(food.nutrients.carbs, newFood.nutrients.carbs, 0.1) &&
+      isNutrientSimilar(food.nutrients.fat, newFood.nutrients.fat, 0.1)
+    );
+    
+    // Boost score if nutrients are similar
+    if (nutrientsSimilar) {
+      similarityScore += NUTRIENT_MATCH_BOOST;
+    }
+    
+    // 3. Check if category matches and boost score
+    if (food.category.toLowerCase() === newFood.category.toLowerCase()) {
+      similarityScore += 0.1; // Boost by 10% for matching category
+    }
+    
+    // Update best match if this is the highest score so far
+    if (similarityScore > highestScore && similarityScore >= SIMILARITY_THRESHOLD) {
+      highestScore = similarityScore;
+      bestMatch = food;
+    }
+  }
+  
+  return bestMatch;
+}
+
+/**
+ * Check if two nutrient values are similar within the given tolerance
+ */
+function isNutrientSimilar(value1: number, value2: number, tolerance: number): boolean {
+  if (value1 === 0 && value2 === 0) {
+    return true;
+  }
+  
+  const max = Math.max(value1, value2);
+  const min = Math.min(value1, value2);
+  
+  return (max - min) / max <= tolerance;
+}
+
 const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,13 +171,6 @@ const RecipeForm = () => {
 
   // AI recipe generation state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationParams, setGenerationParams] = useState({
-    cuisine: '',
-    dietaryRestrictions: '',
-    mealType: '',
-    difficulty: ''
-  });
-  const [showGenerationModal, setShowGenerationModal] = useState(false);
 
   // New ingredient state
   const [newIngredient, setNewIngredient] = useState<RecipeIngredient>({
@@ -151,14 +251,13 @@ const RecipeForm = () => {
 
   // AI recipe generation mutation
   const generateRecipeMutation = useMutation({
-    mutationFn: async (params: any) => {
-      // Determine the API server URL - in development, it's likely running on port 8787
+    mutationFn: async (prompt: string) => {
       const response = await fetch(`/api/recipe/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(params)
+        body: JSON.stringify({ prompt })
       });
 
       if (!response.ok) {
@@ -172,6 +271,8 @@ const RecipeForm = () => {
       // Process the generated recipe
       await processGeneratedRecipe(data);
     },
+    // Retry the mutation if it fails
+    retry: 1,
     onError: (error: any) => {
       setError(error.message || 'Failed to generate recipe');
       setIsGenerating(false);
@@ -258,17 +359,31 @@ const RecipeForm = () => {
         // Process ingredients in parallel for better performance
         const ingredientPromises = data.processedIngredients.map(async (processedIngredient: any) => {
           try {
-            // Check if the food already exists in our database
-            const existingFoods = await foodService.searchFoods(processedIngredient.food.name);
+            // Check if the food already exists in our database using a more robust matching algorithm
+            const existingFoods = await foodService.getAllFoods();
             let foodId = '';
             let foodDetails = null;
             
-            // If food exists, use its ID
-            if (existingFoods.length > 0) {
-              // Use the first matching food
-              foodId = existingFoods[0]._id;
-              foodDetails = existingFoods[0];
-              console.log(`Using existing food: ${existingFoods[0].name} (${foodId})`);
+            // Check if we have a Nutritionix ID match (nix_item_id has priority)
+            let nutritionixIdMatch = null;
+            if (processedIngredient.food.nixItemId) {
+              nutritionixIdMatch = existingFoods.find(
+                f => f.nixItemId === processedIngredient.food.nixItemId
+              );
+            }
+            
+            // Find the best matching food using a similarity score
+            const foodMatch = findBestFoodMatch(existingFoods, processedIngredient.food);
+            
+            // Use either the nutritionix match or best name match
+            if (nutritionixIdMatch) {
+              foodId = nutritionixIdMatch._id;
+              foodDetails = nutritionixIdMatch;
+              console.log(`Using existing food via Nutritionix ID: ${nutritionixIdMatch.name} (${foodId})`);
+            } else if (foodMatch) {
+              foodId = foodMatch._id;
+              foodDetails = foodMatch;
+              console.log(`Using existing food: ${foodMatch.name} (${foodId}) - matched with ${processedIngredient.food.name}`);
             } else {
               // Create a new food item
               console.log(`Creating new food: ${processedIngredient.food.name}`);
@@ -278,7 +393,13 @@ const RecipeForm = () => {
                 category: processedIngredient.food.category,
                 nutrients: processedIngredient.food.nutrients,
                 serving: processedIngredient.food.serving,
-                tags: [processedIngredient.food.category]
+                tags: [processedIngredient.food.category],
+                nutritionixId: processedIngredient.food.nutritionixId,
+                commonName: processedIngredient.food.commonName,
+                nixItemId: processedIngredient.food.nixItemId,
+                nixBrandId: processedIngredient.food.nixBrandId,
+                ndbNumber: processedIngredient.food.ndbNumber,
+                altMeasures: processedIngredient.food.altMeasures
               });
               
               foodId = newFood._id;
@@ -324,10 +445,20 @@ const RecipeForm = () => {
 
   // Handle AI recipe generation
   const handleGenerateRecipe = () => {
+    // Use the recipe name as the prompt
+    if (!name || name.trim() === '') {
+      setError('Please enter a recipe name or description to generate from');
+      return;
+    }
+    
     setIsGenerating(true);
     setError(null);
-    generateRecipeMutation.mutate(generationParams);
-    setShowGenerationModal(false);
+    
+    // Store the current name to use as a prompt
+    const prompt = name;
+    
+    // Call the API with the name as the prompt
+    generateRecipeMutation.mutate(prompt);
   };
 
   // Handle form submission
@@ -340,9 +471,9 @@ const RecipeForm = () => {
       name,
       description,
       servings,
-      ingredients,
-      instructions,
-      tags
+      ingredients: ingredients?.length || 0, // Just log the count to reduce console noise
+      instructions: instructions?.length || 0,
+      tags: tags?.length || 0
     });
 
     // Form validation
@@ -458,9 +589,9 @@ const RecipeForm = () => {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowGenerationModal(true)}
+                    onClick={handleGenerateRecipe}
                     className="ml-2 flex items-center justify-center bg-primary-600 text-white py-2 px-3 rounded hover:bg-primary-700 transition-colors"
-                    title="Generate recipe with AI"
+                    title="Generate recipe with AI using this name as prompt"
                     disabled={isGenerating}
                   >
                     {isGenerating ? (
@@ -815,85 +946,6 @@ const RecipeForm = () => {
         </div>
       </form>
 
-      {/* AI Recipe Generation Modal */}
-      {showGenerationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold mb-4 dark:text-gray-200">Generate Recipe with AI</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="cuisine" className="form-label dark:text-gray-300">Cuisine (optional)</label>
-                <input
-                  id="cuisine"
-                  type="text"
-                  className="form-input w-full"
-                  value={generationParams.cuisine}
-                  onChange={(e) => setGenerationParams({ ...generationParams, cuisine: e.target.value })}
-                  placeholder="e.g. Italian, Mexican, Japanese"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="dietaryRestrictions" className="form-label dark:text-gray-300">Dietary Restrictions (optional)</label>
-                <input
-                  id="dietaryRestrictions"
-                  type="text"
-                  className="form-input w-full"
-                  value={generationParams.dietaryRestrictions}
-                  onChange={(e) => setGenerationParams({ ...generationParams, dietaryRestrictions: e.target.value })}
-                  placeholder="e.g. Vegetarian, Gluten-free, Dairy-free"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="mealType" className="form-label dark:text-gray-300">Meal Type (optional)</label>
-                <input
-                  id="mealType"
-                  type="text"
-                  className="form-input w-full"
-                  value={generationParams.mealType}
-                  onChange={(e) => setGenerationParams({ ...generationParams, mealType: e.target.value })}
-                  placeholder="e.g. Breakfast, Lunch, Dinner, Dessert"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="difficulty" className="form-label dark:text-gray-300">Difficulty (optional)</label>
-                <select
-                  id="difficulty"
-                  className="form-input w-full"
-                  value={generationParams.difficulty}
-                  onChange={(e) => setGenerationParams({ ...generationParams, difficulty: e.target.value })}
-                >
-                  <option value="">Any difficulty</option>
-                  <option value="easy">Easy</option>
-                  <option value="medium">Medium</option>
-                  <option value="hard">Hard</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setShowGenerationModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleGenerateRecipe}
-                disabled={isGenerating}
-              >
-                {isGenerating ? 'Generating...' : 'Generate Recipe'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

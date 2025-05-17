@@ -56,16 +56,18 @@ export async function onRequest(context) {
       console.log('No request body or invalid JSON, using default parameters');
     }
     
-    // Extract parameters with defaults
-    const { cuisine, dietaryRestrictions, mealType, difficulty } = params;
+    // Extract prompt parameter
+    const { prompt } = params;
     
-    // Generate recipe using OpenAI
-    const recipeData = await generateRecipeWithOpenAI(env.OPENAI_API_KEY, {
-      cuisine, 
-      dietaryRestrictions, 
-      mealType,
-      difficulty
-    });
+    if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Recipe prompt is required' }), {
+        status: 400,
+        headers
+      });
+    }
+    
+    // Generate recipe using OpenAI with the prompt
+    const recipeData = await generateRecipeWithOpenAI(env.OPENAI_API_KEY, prompt);
     
     if (!recipeData || !recipeData.ingredients || recipeData.ingredients.length === 0) {
       throw new Error('Failed to generate valid recipe data');
@@ -103,22 +105,12 @@ export async function onRequest(context) {
 /**
  * Generate a recipe using OpenAI with function calling
  */
-async function generateRecipeWithOpenAI(apiKey, params) {
-  const { cuisine, dietaryRestrictions, mealType, difficulty } = params;
+async function generateRecipeWithOpenAI(apiKey, prompt) {
+  // Build system prompt with specific instructions for ingredient naming
+  const systemPrompt = 'You are a helpful assistant that creates detailed, accurate recipes. When listing ingredients, always use specific, definitive names without variations or alternatives. For example, use "Parmesan cheese" not "grated cheese (e.g. Kefalotyri or Parmesan)". Each ingredient should have exactly one precise name that clearly identifies what it is, without parenthetical alternatives or options.';
   
-  // Build system prompt with any provided parameters
-  let systemPrompt = 'You are a helpful assistant that creates detailed, accurate recipes.';
-  
-  if (cuisine || dietaryRestrictions || mealType || difficulty) {
-    systemPrompt += ' Generate a recipe with the following requirements:';
-    if (cuisine) systemPrompt += `\n- Cuisine: ${cuisine}`;
-    if (dietaryRestrictions) systemPrompt += `\n- Dietary restrictions: ${dietaryRestrictions}`;
-    if (mealType) systemPrompt += `\n- Meal type: ${mealType}`;
-    if (difficulty) systemPrompt += `\n- Difficulty level: ${difficulty}`;
-  }
-  
-  // Create user prompt
-  const userPrompt = 'Please create a detailed recipe with ingredients and instructions.';
+  // Create user prompt from the provided prompt
+  const userPrompt = `Please create a detailed recipe for: ${prompt}. Use specific, single ingredient names without offering alternatives in parentheses. For example, write "Parmesan cheese" not "cheese (Parmesan or Pecorino)".`;
   
   // Define the function schema for structured output
   const functions = [
@@ -144,7 +136,7 @@ async function generateRecipeWithOpenAI(apiKey, params) {
               properties: {
                 name: {
                   type: 'string',
-                  description: 'Name of the ingredient (e.g., "tomato", "chicken breast")'
+                  description: 'Specific, singular name of the ingredient without alternatives or variations (e.g., "tomato", "chicken breast", "Parmesan cheese"). Do not include options or alternatives in parentheses.'
                 },
                 quantity: {
                   type: 'number',
@@ -293,7 +285,11 @@ async function processIngredients(ingredients, appId, appKey, cache) {
             unit: mapNutritionixUnit(foodData.serving_unit, foodData.food_name),
             weightInGrams: foodData.serving_weight_grams
           },
-          category: determineFoodCategory(foodData.food_name)
+          category: determineFoodCategory(foodData.food_name),
+          // Add nutritionix ID for better deduplication
+          nutritionixId: foodData.food_name || foodData.tag_id,
+          // Add common name to help with matching
+          commonName: foodData.food_name
         },
         // Information needed for recipe ingredients
         quantity: ingredient.quantity,
@@ -305,6 +301,14 @@ async function processIngredients(ingredients, appId, appKey, cache) {
       if (foodData.nf_sugars) processedIngredient.food.nutrients.sugar = foodData.nf_sugars;
       if (foodData.nf_sodium) processedIngredient.food.nutrients.sodium = foodData.nf_sodium;
       if (foodData.nf_cholesterol) processedIngredient.food.nutrients.cholesterol = foodData.nf_cholesterol;
+      
+      // Add additional identifiers from Nutritionix that help with deduplication
+      if (foodData.nix_item_id) processedIngredient.food.nixItemId = foodData.nix_item_id;
+      if (foodData.nix_brand_id) processedIngredient.food.nixBrandId = foodData.nix_brand_id;
+      if (foodData.ndb_number) processedIngredient.food.ndbNumber = foodData.ndb_number;
+      if (foodData.alt_measures && foodData.alt_measures.length > 0) {
+        processedIngredient.food.altMeasures = foodData.alt_measures;
+      }
       
       // Store in cache (expires after 30 days)
       await cache.put(cacheKey, JSON.stringify(processedIngredient), { expirationTtl: 2592000 });

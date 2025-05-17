@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Food Planning Database</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #e53e3e;
+    }
+    button {
+      background-color: #e53e3e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #c53030;
+    }
+    button:disabled {
+      background-color: #aaa;
+      cursor: not-allowed;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow: auto;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+    .warning {
+      background-color: #fff5f5;
+      border-left: 4px solid #e53e3e;
+      padding: 10px 15px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Clear Food Planning Database</h1>
+  
+  <div class="warning">
+    <strong>Warning:</strong> This will delete ALL data from your database, including all food items, recipes, and menus. 
+    This action cannot be undone.
+  </div>
+  
+  <p>Use this utility to completely clear the database and start fresh. This can be useful if you want to remove duplicate data or start over.</p>
+  
+  <button id="clearBtn">Clear Database</button>
+  <button id="checkBtn">Check Database</button>
+  
+  <pre id="output">Ready to clear database...</pre>
+  
+  <!-- Load PouchDB from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.find.min.js"></script>
+  
+  <script>
+    // Define constants and globals
+    const DB_NAME = 'food-planner';
+    const DocumentTypes = {
+      FOOD: 'food',
+      RECIPE: 'recipe',
+      MENU: 'menu'
+    };
+    
+    // Create database connection
+    const db = new PouchDB(DB_NAME);
+    
+    // Get elements
+    const clearBtn = document.getElementById('clearBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const output = document.getElementById('output');
+    
+    // Log function
+    function log(message) {
+      output.textContent += '\n' + message;
+      output.scrollTop = output.scrollHeight;
+    }
+    
+    // Check database function
+    async function checkDatabase() {
+      clearBtn.disabled = true;
+      checkBtn.disabled = true;
+      output.textContent = 'Checking database...\n';
+      
+      try {
+        // Get database info
+        const info = await db.info();
+        log(`Database info: ${info.doc_count} documents, ${info.doc_del_count} deleted`);
+        
+        // Get all documents
+        const allDocsResponse = await db.allDocs({ include_docs: true });
+        const allDocs = allDocsResponse.rows;
+        
+        // Count document types
+        const counts = {
+          food: 0,
+          recipe: 0,
+          menu: 0,
+          other: 0
+        };
+        
+        allDocs.forEach(row => {
+          const doc = row.doc;
+          if (doc.type === DocumentTypes.FOOD) {
+            counts.food++;
+          } else if (doc.type === DocumentTypes.RECIPE) {
+            counts.recipe++;
+          } else if (doc.type === DocumentTypes.MENU) {
+            counts.menu++;
+          } else {
+            counts.other++;
+          }
+        });
+        
+        log(`\nFound documents by type:
+  - Foods: ${counts.food}
+  - Recipes: ${counts.recipe}
+  - Menus: ${counts.menu}
+  - Other: ${counts.other}
+  - Total: ${allDocs.length}
+`);
+        
+        log('\nDatabase check completed!');
+      } catch (error) {
+        log(`Error checking database: ${error.message}`);
+        console.error('Error checking database:', error);
+      }
+      
+      clearBtn.disabled = false;
+      checkBtn.disabled = false;
+    }
+    
+    // Clear database function
+    async function clearDatabase() {
+      if (!confirm('Are you sure you want to delete ALL data from the database? This action cannot be undone.')) {
+        return;
+      }
+      
+      clearBtn.disabled = true;
+      checkBtn.disabled = true;
+      output.textContent = 'Starting database cleanup...\n';
+      
+      try {
+        // Get database info before cleanup
+        const beforeInfo = await db.info();
+        log(`Database before cleanup: ${beforeInfo.doc_count} documents, ${beforeInfo.doc_del_count} deleted`);
+        
+        // Get all documents
+        log('Fetching all documents...');
+        const allDocsResponse = await db.allDocs({ include_docs: true });
+        const allDocs = allDocsResponse.rows;
+        
+        // Count document types
+        const counts = {
+          food: 0,
+          recipe: 0,
+          menu: 0,
+          other: 0
+        };
+        
+        // Prepare documents for deletion
+        const docsToDelete = allDocs.map(row => {
+          const doc = row.doc;
+          
+          // Count document types
+          if (doc.type === DocumentTypes.FOOD) {
+            counts.food++;
+          } else if (doc.type === DocumentTypes.RECIPE) {
+            counts.recipe++;
+          } else if (doc.type === DocumentTypes.MENU) {
+            counts.menu++;
+          } else {
+            counts.other++;
+          }
+          
+          // Mark document for deletion
+          return {
+            _id: doc._id,
+            _rev: doc._rev,
+            _deleted: true
+          };
+        });
+        
+        log(`\nFound documents by type:
+  - Foods: ${counts.food}
+  - Recipes: ${counts.recipe}
+  - Menus: ${counts.menu}
+  - Other: ${counts.other}
+  - Total: ${docsToDelete.length}
+`);
+        
+        // Delete documents if there are any
+        if (docsToDelete.length > 0) {
+          log(`Deleting ${docsToDelete.length} documents...`);
+          const result = await db.bulkDocs(docsToDelete);
+          log(`Deletion complete!`);
+        } else {
+          log('No documents to delete.');
+        }
+        
+        // Reset database indexes
+        log('Resetting database indexes...');
+        await resetIndexes();
+        
+        // Get database info after cleanup
+        const afterInfo = await db.info();
+        log(`Database after cleanup: ${afterInfo.doc_count} documents, ${afterInfo.doc_del_count} deleted`);
+        
+        log('\nDatabase cleanup completed successfully!');
+        log('\nRefresh your app window to see the changes.');
+      } catch (error) {
+        log(`Error during database cleanup: ${error.message}`);
+        console.error('Error during database cleanup:', error);
+      }
+      
+      clearBtn.disabled = false;
+      checkBtn.disabled = false;
+    }
+    
+    // Reset indexes function
+    async function resetIndexes() {
+      try {
+        log('Getting current indexes...');
+        let beforeIndexes;
+        try {
+          beforeIndexes = await db.getIndexes();
+          log(`Found ${beforeIndexes.indexes.length} indexes`);
+        } catch (err) {
+          log('Unable to list current indexes');
+        }
+        
+        // Get all design documents (indexes)
+        log('Finding all design documents...');
+        const result = await db.allDocs({ startkey: '_design/', endkey: '_design/\ufff0' });
+        log(`Found ${result.rows.length} design documents to remove`);
+        
+        // Delete all design documents
+        let successfulRemovals = 0;
+        for (const row of result.rows) {
+          const docId = row.id;
+          const docRev = row.value.rev;
+          try {
+            await db.remove({ _id: docId, _rev: docRev });
+            log(`Removed index: ${docId}`);
+            successfulRemovals++;
+          } catch (removeError) {
+            log(`Failed to remove index ${docId}`);
+          }
+        }
+        
+        log(`Successfully removed ${successfulRemovals} of ${result.rows.length} indexes`);
+        
+        // Create new indexes
+        log('Creating required indexes...');
+        await db.createIndex({ index: { fields: ['type'] } });
+        await db.createIndex({ index: { fields: ['name'] } });
+        await db.createIndex({ index: { fields: ['category'] } });
+        await db.createIndex({ index: { fields: ['date'] } });
+        
+        log('Database indexes reset successfully');
+      } catch (error) {
+        log(`Error during index reset: ${error.message}`);
+        console.error('Error during index reset:', error);
+      }
+    }
+    
+    // Event listeners
+    clearBtn.addEventListener('click', clearDatabase);
+    checkBtn.addEventListener('click', checkDatabase);
+  </script>
+</body>
+</html>
