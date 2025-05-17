@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
+import { Select } from '../../../components/UI';
 import type { Food, NutritionInfo, ServingInfo } from '../../../types';
 
 const FoodForm = () => {
@@ -15,7 +16,6 @@ const FoodForm = () => {
   const [category, setCategory] = useState('');
   const [servingSize, setServingSize] = useState(100);
   const [servingUnit, setServingUnit] = useState('g');
-  const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
   const [carbs, setCarbs] = useState(0);
   const [fat, setFat] = useState(0);
@@ -28,6 +28,11 @@ const FoodForm = () => {
   const [newTag, setNewTag] = useState('');
   const [newAllergen, setNewAllergen] = useState('');
   const [error, setError] = useState<string | null>(null);
+  
+  // Calculate calories from macros in real-time
+  const calculatedCalories = useMemo(() => {
+    return foodService.calculateCaloriesFromMacros(protein, carbs, fat);
+  }, [protein, carbs, fat]);
 
   // Categories for the dropdown
   const categories = [
@@ -60,7 +65,6 @@ const FoodForm = () => {
       setCategory(foodData.category);
       setServingSize(foodData.serving.size);
       setServingUnit(foodData.serving.unit);
-      setCalories(foodData.nutrients.calories);
       setProtein(foodData.nutrients.protein);
       setCarbs(foodData.nutrients.carbs);
       setFat(foodData.nutrients.fat);
@@ -120,9 +124,9 @@ const FoodForm = () => {
       return;
     }
 
-    // Create nutrients object
+    // Create nutrients object (calories will be calculated in the service)
     const nutrients: NutritionInfo = {
-      calories,
+      calories: calculatedCalories, // We include the calculated value for type-safety, but service will recalculate
       protein,
       carbs,
       fat
@@ -235,10 +239,9 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="category" className="form-label dark:text-gray-300">Category</label>
-                <select
+                <Select
                   id="category"
-                  className="form-input"
+                  label="Category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   required
@@ -249,7 +252,7 @@ const FoodForm = () => {
                       {cat}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
           </div>
@@ -272,10 +275,9 @@ const FoodForm = () => {
                 />
               </div>
               <div>
-                <label htmlFor="servingUnit" className="form-label dark:text-gray-300">Unit</label>
-                <select
+                <Select
                   id="servingUnit"
-                  className="form-input"
+                  label="Unit"
                   value={servingUnit}
                   onChange={(e) => setServingUnit(e.target.value)}
                   required
@@ -285,7 +287,7 @@ const FoodForm = () => {
                       {unit}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
           </div>
@@ -295,17 +297,31 @@ const FoodForm = () => {
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Nutritional Information (per serving)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="calories" className="form-label dark:text-gray-300">Calories</label>
-                <input
-                  id="calories"
-                  type="number"
-                  className="form-input"
-                  value={calories}
-                  onChange={(e) => setCalories(parseFloat(e.target.value))}
-                  min="0"
-                  step="0.1"
-                  required
-                />
+                <label htmlFor="calories" className="form-label dark:text-gray-300">
+                  Calories
+                  <span 
+                    className="ml-1 inline-flex items-center text-gray-500 dark:text-gray-400 cursor-help"
+                    title="Calculated using 4 cal/g for protein and carbs, 9 cal/g for fat"
+                  >
+                    <span className="material-symbols-outlined text-sm">info</span>
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="calories"
+                    type="text"
+                    className="form-input bg-gray-100 dark:bg-gray-700"
+                    value={calculatedCalories}
+                    readOnly
+                    disabled
+                    style={{ appearance: 'textfield' }}
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400 text-xs">
+                      Auto-calculated
+                    </span>
+                  </div>
+                </div>
               </div>
               <div>
                 <label htmlFor="protein" className="form-label dark:text-gray-300">Protein (g)</label>

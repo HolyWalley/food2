@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
 import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
+import { Select } from '../../../components/UI';
 import { type MenuItem, type Food, type Recipe } from '../../../types';
 
 const MenuForm = () => {
@@ -294,27 +295,21 @@ const MenuForm = () => {
             {/* Add new item */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div className="col-span-1">
-                <label htmlFor="itemType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Type
-                </label>
-                <select
+                <Select
                   id="itemType"
-                  className="form-input"
+                  label="Type"
                   value={newItem.type}
                   onChange={(e) => setNewItem({ ...newItem, type: e.target.value as 'food' | 'recipe', itemId: '' })}
                 >
                   <option value="food">Food</option>
                   <option value="recipe">Recipe</option>
-                </select>
+                </Select>
               </div>
 
               <div className="col-span-2">
-                <label htmlFor="itemId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {newItem.type === 'food' ? 'Food' : 'Recipe'}
-                </label>
-                <select
+                <Select
                   id="itemId"
-                  className="form-input"
+                  label={newItem.type === 'food' ? 'Food' : 'Recipe'}
                   value={newItem.itemId}
                   onChange={(e) => setNewItem({ ...newItem, itemId: e.target.value })}
                 >
@@ -325,7 +320,7 @@ const MenuForm = () => {
                   {newItem.type === 'recipe' && recipes?.map(recipe => (
                     <option key={recipe._id} value={recipe._id}>{recipe.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="col-span-1">

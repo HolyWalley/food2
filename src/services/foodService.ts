@@ -7,14 +7,52 @@ import type { Food, NutritionInfo, ServingInfo } from '../types';
 
 export class FoodService {
   /**
+   * Calculate calories from macronutrients using the Atwater system
+   * Protein: 4 calories per gram
+   * Carbohydrates: 4 calories per gram
+   * Fat: 9 calories per gram
+   */
+  calculateCaloriesFromMacros(protein: number, carbs: number, fat: number): number {
+    // Use the Atwater system
+    const caloriesFromProtein = protein * 4;
+    const caloriesFromCarbs = carbs * 4;
+    const caloriesFromFat = fat * 9;
+    
+    // Round to 1 decimal place
+    const totalCalories = Math.round((caloriesFromProtein + caloriesFromCarbs + caloriesFromFat) * 10) / 10;
+    
+    console.log(`Calories calculation:
+      - From protein: ${protein}g × 4 = ${caloriesFromProtein} calories
+      - From carbs: ${carbs}g × 4 = ${caloriesFromCarbs} calories
+      - From fat: ${fat}g × 9 = ${caloriesFromFat} calories
+      - Total: ${totalCalories} calories
+    `);
+    
+    return totalCalories;
+  }
+  
+  /**
    * Create a new food item
    */
   async createFood(food: Omit<Food, '_id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Food> {
+    // Ensure calories are calculated from macros
+    const calculatedFood = {
+      ...food,
+      nutrients: {
+        ...food.nutrients,
+        calories: this.calculateCaloriesFromMacros(
+          food.nutrients.protein,
+          food.nutrients.carbs,
+          food.nutrients.fat
+        )
+      }
+    };
+    
     const newFood = createFoodDocument({
       _id: `food_${uuidv4()}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...food
+      ...calculatedFood
     });
 
     return await db.put(newFood);
@@ -31,7 +69,20 @@ export class FoodService {
    * Update an existing food item
    */
   async updateFood(food: Food): Promise<Food> {
-    return await db.put(food);
+    // Ensure calories are calculated from macros
+    const calculatedFood = {
+      ...food,
+      nutrients: {
+        ...food.nutrients,
+        calories: this.calculateCaloriesFromMacros(
+          food.nutrients.protein,
+          food.nutrients.carbs,
+          food.nutrients.fat
+        )
+      }
+    };
+    
+    return await db.put(calculatedFood);
   }
 
   /**
@@ -125,18 +176,29 @@ export class FoodService {
     }
     
     // Calculate the nutritional values based on the quantity
+    const adjustedProtein = Math.round((food.nutrients.protein * conversionFactor) * 100) / 100;
+    const adjustedCarbs = Math.round((food.nutrients.carbs * conversionFactor) * 100) / 100;
+    const adjustedFat = Math.round((food.nutrients.fat * conversionFactor) * 100) / 100;
+    
+    // Calculate calories from the adjusted macros
+    const calculatedCalories = this.calculateCaloriesFromMacros(
+      adjustedProtein,
+      adjustedCarbs,
+      adjustedFat
+    );
+    
     const result: NutritionInfo = {
-      calories: Math.round((food.nutrients.calories * conversionFactor) * 100) / 100,
-      protein: Math.round((food.nutrients.protein * conversionFactor) * 100) / 100,
-      carbs: Math.round((food.nutrients.carbs * conversionFactor) * 100) / 100,
-      fat: Math.round((food.nutrients.fat * conversionFactor) * 100) / 100,
+      calories: calculatedCalories,
+      protein: adjustedProtein,
+      carbs: adjustedCarbs,
+      fat: adjustedFat,
     };
     
     console.log(`Base nutrition calculation:
-      - Original calories: ${food.nutrients.calories} × ${conversionFactor} = ${result.calories}
-      - Original protein: ${food.nutrients.protein}g × ${conversionFactor} = ${result.protein}g
-      - Original carbs: ${food.nutrients.carbs}g × ${conversionFactor} = ${result.carbs}g
-      - Original fat: ${food.nutrients.fat}g × ${conversionFactor} = ${result.fat}g
+      - Adjusted protein: ${food.nutrients.protein}g × ${conversionFactor} = ${result.protein}g
+      - Adjusted carbs: ${food.nutrients.carbs}g × ${conversionFactor} = ${result.carbs}g
+      - Adjusted fat: ${food.nutrients.fat}g × ${conversionFactor} = ${result.fat}g
+      - Calculated calories: ${result.calories}
     `);
     
     // Add optional nutrients if they exist

@@ -143,8 +143,18 @@ const FoodDetails = () => {
                   style={{ viewTransitionName: `food-nutrients-${food._id}` }}
                 >
                   <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-                    <div className="text-lg font-bold text-green-700 dark:text-green-300">{food.nutrients.calories}</div>
-                    <div className="text-sm text-green-600 dark:text-green-400">Calories</div>
+                    <div className="text-lg font-bold text-green-700 dark:text-green-300">
+                      {food.nutrients.calories}
+                    </div>
+                    <div className="text-sm text-green-600 dark:text-green-400">
+                      Calories
+                      <span 
+                        className="ml-1 inline-flex items-center text-green-500 dark:text-green-400 cursor-help"
+                        title="Calculated using 4 cal/g for protein and carbs, 9 cal/g for fat"
+                      >
+                        <span className="material-symbols-outlined text-xs">info</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
                     <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{food.nutrients.protein}g</div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
 import foodService from '../../../services/foodService';
+import { Select } from '../../../components/UI';
 import type { Recipe, RecipeIngredient, Food } from '../../../types';
 
 const RecipeForm = () => {
@@ -361,10 +362,9 @@ const RecipeForm = () => {
               <h3 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Add Ingredient</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-2">
-                  <label htmlFor="foodId" className="form-label dark:text-gray-300">Food</label>
-                  <select
+                  <Select
                     id="foodId"
-                    className="form-input"
+                    label="Food"
                     value={newIngredient.foodId}
                     onChange={(e) => setNewIngredient({...newIngredient, foodId: e.target.value})}
                     disabled={foodsLoading}
@@ -375,7 +375,7 @@ const RecipeForm = () => {
                         {food.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label htmlFor="quantity" className="form-label dark:text-gray-300">Quantity</label>
