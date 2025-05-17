@@ -1,8 +1,6 @@
-import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
-import type { NutritionInfo, ServingInfo } from '../../../types';
 import { withViewTransition } from '../../../utils/viewTransition';
 
 const FoodDetails = () => {

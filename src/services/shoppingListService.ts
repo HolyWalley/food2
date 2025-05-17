@@ -1,7 +1,8 @@
 import foodService from './foodService';
 import recipeService from './recipeService';
-import menuService from './menuService';
-import { type Menu, type Food, type Recipe, type RecipeIngredient } from '../types';
+// We don't use menuService directly in this file
+// import menuService from './menuService';
+import { type Menu, type Food, type RecipeIngredient } from '../types';
 
 // Represents an item in the shopping list with quantity, unit, and food name
 export interface ShoppingListItem {

@@ -51,19 +51,8 @@ const FoodForm = () => {
     'Other'
   ];
 
-  // Units for the dropdown
-  const units = [
-    // Weight units
-    'g', 'kg', 'oz', 'lb',
-    // Volume units
-    'ml', 'l', 'cup', 'tbsp', 'tsp',
-    // Count units
-    'piece', 'serving',
-    // Size descriptors
-    'small', 'medium', 'large',
-    // Common food units
-    'clove', 'slice', 'can', 'bottle', 'packet', 'container'
-  ];
+  // Units for the dropdown - defined in unitCategories below
+  // We don't need a separate units array since we're organizing by category
 
   // Unit categories for grouping in select
   const unitCategories = {
@@ -108,7 +97,7 @@ const FoodForm = () => {
       queryClient.invalidateQueries({ queryKey: ['foods'] });
       navigate('/foods');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to create food');
     }
   });
@@ -121,7 +110,7 @@ const FoodForm = () => {
       queryClient.invalidateQueries({ queryKey: ['food', id] });
       navigate('/foods');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to update food');
     }
   });

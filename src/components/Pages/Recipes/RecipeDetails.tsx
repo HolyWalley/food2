@@ -40,7 +40,7 @@ const RecipeDetails = () => {
   });
 
   // Calculate nutrition information
-  const { data: nutrition, isLoading: nutritionLoading, error: nutritionError } = useQuery({
+  const { isLoading: nutritionLoading, error: nutritionError } = useQuery({
     queryKey: ['recipeNutrition', id],
     queryFn: () => (recipe ? recipeService.calculateRecipeNutrition(recipe) : Promise.reject('No recipe')),
     enabled: !!recipe,

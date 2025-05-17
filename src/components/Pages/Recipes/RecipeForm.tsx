@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
 import foodService from '../../../services/foodService';
 import { Select, PaginatedSelect } from '../../../components/UI';
-import { unitCategories, standardUnits } from '../../../utils/nutritionixUtils';
+import { unitCategories } from '../../../utils/nutritionixUtils';
 import type { Recipe, RecipeIngredient, Food } from '../../../types';
-import { v4 as uuidv4 } from 'uuid';
+// We don't use uuidv4 directly in this component
+// import { v4 as uuidv4 } from 'uuid';
 
 // Component to handle food name display, including individual fetching if needed
 const IngredientFoodName = ({ foodId, foodFromList }: { foodId: string, foodFromList?: Food }) => {
@@ -43,7 +44,7 @@ const IngredientFoodName = ({ foodId, foodFromList }: { foodId: string, foodFrom
  * Find the best matching food from existing foods based on name similarity and nutrient profile.
  * Returns the best match if similarity is above threshold, otherwise null.
  */
-function findBestFoodMatch(existingFoods: Food[], newFood: any) {
+function findBestFoodMatch(existingFoods: Food[], newFood: Record<string, unknown>) {
   // Lower threshold means easier matching
   const SIMILARITY_THRESHOLD = 0.7;  // 70% similarity required for a match
   const NUTRIENT_MATCH_BOOST = 0.2;  // Boost score by 20% if nutrients match closely
@@ -82,7 +83,7 @@ function findBestFoodMatch(existingFoods: Food[], newFood: any) {
     // Normalize and tokenize names, removing stopwords
     const normalizeAndTokenize = (name: string): string[] => {
       return name.toLowerCase()
-        .replace(/[(),-\/]/g, ' ') // Replace punctuation with spaces
+        .replace(/[(),-/]/g, ' ') // Replace punctuation with spaces
         .split(/\s+/)
         .filter(word => word.length > 1 && !stopwords.has(word));
     };
@@ -231,7 +232,7 @@ const RecipeForm = () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       navigate('/recipes');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to create recipe');
     }
   });
@@ -244,7 +245,7 @@ const RecipeForm = () => {
       queryClient.invalidateQueries({ queryKey: ['recipe', id] });
       navigate('/recipes');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to update recipe');
     }
   });
@@ -273,7 +274,7 @@ const RecipeForm = () => {
     },
     // Retry the mutation if it fails
     retry: 1,
-    onError: (error: any) => {
+    onError: (error: Error) => {
       setError(error.message || 'Failed to generate recipe');
       setIsGenerating(false);
     }
@@ -335,7 +336,7 @@ const RecipeForm = () => {
   };
 
   // Process the AI-generated recipe and populate the form
-  const processGeneratedRecipe = async (data: any) => {
+  const processGeneratedRecipe = async (data: Record<string, unknown>) => {
     try {
       console.log('Processing generated recipe:', data);
 
@@ -357,7 +358,7 @@ const RecipeForm = () => {
       // Handle ingredients
       if (data.processedIngredients && data.processedIngredients.length > 0) {
         // Process ingredients in parallel for better performance
-        const ingredientPromises = data.processedIngredients.map(async (processedIngredient: any) => {
+        const ingredientPromises = (data.processedIngredients as Array<Record<string, unknown>>).map(async (processedIngredient) => {
           try {
             // Check if the food already exists in our database using a more robust matching algorithm
             const existingFoods = await foodService.getAllFoods();

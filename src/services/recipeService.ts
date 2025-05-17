@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import db from './db';
 import foodService from './foodService';
-import { DocumentTypes, createRecipeDocument } from '../models.js';
+import { createRecipeDocument } from '../models.js';
 
 // For TypeScript type checking only
 import type { Recipe, RecipeIngredient, NutritionInfo } from '../types';
@@ -275,7 +275,8 @@ export class RecipeService {
       try {
         // Try to get the food item
         await foodService.getFoodById(ingredient.foodId);
-      } catch (error) {
+      } catch {
+        // If we can't find the food, add it to missingIngredients
         missingIngredients.push(ingredient.foodId);
       }
     }

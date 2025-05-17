@@ -5,7 +5,7 @@ import menuService from '../../../services/menuService';
 import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
 import { Select, PaginatedSelect } from '../../../components/UI';
-import { type MenuItem, type Food, type Recipe } from '../../../types';
+import type { MenuItem } from '../../../types';
 
 const MenuForm = () => {
   const { id } = useParams<{ id: string }>();

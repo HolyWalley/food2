@@ -10,9 +10,9 @@ type AppDocument = Food | Recipe | Menu;
 // Get the global PouchDB object that was loaded from CDN
 // Use type declaration to help TypeScript understand the global variable
 declare const PouchDB: {
-  new<T>(name: string, options?: any): PouchDB.Database<T>;
-  plugin(plugin: any): void;
-  on(eventName: string, callback: Function): void;
+  new<T>(name: string, options?: Record<string, unknown>): PouchDB.Database<T>;
+  plugin(plugin: Record<string, unknown>): void;
+  on(eventName: string, callback: (...args: unknown[]) => void): void;
   version: string;
 };
 
@@ -190,7 +190,7 @@ class Database {
   // Delete a document
   public async remove(id: string, rev: string): Promise<void> {
     try {
-      await this.db.remove({ _id: id, _rev: rev } as any);
+      await this.db.remove({ _id: id, _rev: rev } as PouchDB.Core.RemoveDocument);
     } catch (error) {
       console.error(`Error removing document with ID ${id}:`, error);
       throw error;
@@ -207,7 +207,7 @@ class Database {
     
     // Instead of trying to use named indexes, let PouchDB choose the best index
     // This avoids "unknown_error" and "could not find that index" errors
-    let useIndex: string | undefined = undefined;
+    // No need to specify an index, PouchDB will choose automatically
     
     // We'll let PouchDB automatically select the appropriate index
     // based on the selector instead of trying to specify one
@@ -271,7 +271,7 @@ class Database {
           // Apply category filter if present (for foods)
           if (selector.category) {
             filteredDocs = filteredDocs.filter(doc => 
-              (doc as any).category === selector.category
+              ('category' in doc && doc.category === selector.category)
             );
           }
           
@@ -386,7 +386,7 @@ class Database {
         const docId = row.id;
         const docRev = row.value.rev;
         try {
-          await this.db.remove({ _id: docId, _rev: docRev } as any);
+          await this.db.remove({ _id: docId, _rev: docRev } as PouchDB.Core.RemoveDocument);
           console.log(`✓ Removed index: ${docId}`);
           successfulRemovals++;
         } catch (removeError) {
@@ -434,14 +434,18 @@ class Database {
       try {
         console.log('Clearing PouchDB query cache...');
         // Clear any internal cache PouchDB might have
-        if ((this.db as any)._query_cache) {
-          (this.db as any)._query_cache = {};
+        // Access internal PouchDB cache with type cast
+        const dbWithCache = this.db as PouchDB.Database<unknown> & { _query_cache?: Record<string, unknown> };
+        if (dbWithCache._query_cache) {
+          dbWithCache._query_cache = {};
           console.log('PouchDB query cache cleared');
         }
         
         // Try to clear other potential caches
-        if ((this.db as any).cache) {
-          (this.db as any).cache = {};
+        // Access another internal PouchDB cache with type cast
+        const dbWithGeneralCache = this.db as PouchDB.Database<unknown> & { cache?: Record<string, unknown> };
+        if (dbWithGeneralCache.cache) {
+          dbWithGeneralCache.cache = {};
           console.log('PouchDB cache cleared');
         }
       } catch (cacheError) {

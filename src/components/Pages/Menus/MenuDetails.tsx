@@ -4,7 +4,7 @@ import menuService from '../../../services/menuService';
 import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
 import { withViewTransition } from '../../../utils/viewTransition';
-import { type Food, type Recipe } from '../../../types';
+// Types imported from services
 
 const MenuDetails = () => {
   const { id } = useParams<{ id: string }>();

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import ReactSelect, { components } from 'react-select';
-import type { GroupBase } from 'react-select';
+// We don't use GroupBase directly
+// import type { GroupBase } from 'react-select';
 import { useDebounce } from '../../hooks/useDebounce';
 import { ThemeContext } from '../../contexts/ThemeContext';
 
 interface Option {
   value: string;
   label: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 interface PaginatedSelectProps {
@@ -87,7 +88,7 @@ const PaginatedSelect: React.FC<PaginatedSelectProps> = ({
     };
     
     fetchOptions();
-  }, [page, debouncedSearch, loadOptions, limit]);
+  }, [page, debouncedSearch, loadOptions, limit, hasMore]);
   
   // Handle input change (search)
   const handleInputChange = (inputValue: string) => {
@@ -109,6 +110,7 @@ const PaginatedSelect: React.FC<PaginatedSelectProps> = ({
   const { darkMode } = useContext(ThemeContext) || { darkMode: false };
   
   // Use the darkMode value from context for styling
+  // Also add hasMore to dependency array of useEffect
 
   // Custom styles to match the application theme including height, colors, and dark mode
   const customStyles = {
@@ -246,7 +248,7 @@ const PaginatedSelect: React.FC<PaginatedSelectProps> = ({
   };
   
   // Custom NoOptionsMessage component
-  const CustomNoOptionsMessage = (props: any) => {
+  const CustomNoOptionsMessage = (props: React.ComponentProps<typeof components.NoOptionsMessage>) => {
     return (
       <components.NoOptionsMessage {...props}>
         <div className="text-gray-500 dark:text-gray-400">
@@ -259,7 +261,7 @@ const PaginatedSelect: React.FC<PaginatedSelectProps> = ({
   };
   
   // Custom MenuList component to handle infinite scrolling
-  const MenuList = (props: any) => {
+  const MenuList = (props: React.ComponentProps<typeof components.MenuList>) => {
     return (
       <components.MenuList {...props} onScroll={handleMenuScroll}>
         {props.children}

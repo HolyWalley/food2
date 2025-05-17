@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import db from './db';
 import foodService from './foodService';
 import recipeService from './recipeService';
-import { DocumentTypes, createMenuDocument } from '../models.js';
+import { createMenuDocument } from '../models.js';
 
 // For TypeScript type checking only
 import type { Menu, Food, Recipe, MenuItem, NutritionInfo } from '../types';
@@ -249,7 +249,8 @@ export class MenuService {
         } else if (item.type === 'recipe') {
           await recipeService.getRecipeById(item.itemId);
         }
-      } catch (error) {
+      } catch {
+        // If we can't find the item, add it to missingItems
         missingItems.push(item.itemId);
       }
     }

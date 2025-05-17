@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
-import shoppingListService, { type ShoppingListItem } from '../../../services/shoppingListService';
+import shoppingListService from '../../../services/shoppingListService';
 import { withViewTransition } from '../../../utils/viewTransition';
 
 interface CheckedItemsState {
@@ -106,7 +106,7 @@ const ShoppingList = () => {
       const checkboxes = printContent.querySelectorAll('input[type="checkbox"]');
       checkboxes.forEach((checkbox) => {
         const checkboxElement = checkbox as HTMLInputElement;
-        const label = checkbox.nextElementSibling as HTMLElement;
+        // We don't need to access the label element directly
         
         // Remove the checkbox (it won't print well) and instead use a visual indicator
         if (checkboxElement.checked) {
