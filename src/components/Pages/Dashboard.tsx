@@ -251,8 +251,8 @@ const Dashboard = () => {
           
           {recentFoods.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">No foods added yet.</p>
-              <Link to="/foods/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600 mt-4">Add Food</Link>
+              <p className="text-gray-500 dark:text-gray-400 mb-8">No foods added yet.</p>
+              <Link to="/foods/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600">Add Food</Link>
             </div>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -284,8 +284,8 @@ const Dashboard = () => {
           
           {recentRecipes.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">No recipes added yet.</p>
-              <Link to="/recipes/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600 mt-4">Add Recipe</Link>
+              <p className="text-gray-500 dark:text-gray-400 mb-8">No recipes added yet.</p>
+              <Link to="/recipes/new" className="btn btn-primary dark:bg-primary-700 dark:hover:bg-primary-600">Add Recipe</Link>
             </div>
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-700">

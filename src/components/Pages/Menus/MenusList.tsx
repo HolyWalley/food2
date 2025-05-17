@@ -149,8 +149,8 @@ const MenusList = () => {
 
       {!sortedMenus || sortedMenus.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">No menus found matching your criteria.</p>
-          <Link to="/menus/new" className="btn btn-primary mt-4">
+          <p className="text-gray-500 dark:text-gray-400 text-lg mb-8">No menus found matching your criteria.</p>
+          <Link to="/menus/new" className="btn btn-primary">
             Create New Menu
           </Link>
         </div>

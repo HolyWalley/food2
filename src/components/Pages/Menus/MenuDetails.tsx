@@ -203,8 +203,8 @@ const MenuDetails = () => {
               <div className="mb-6">
                 <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Menu Items</h2>
                 {menu.items.length === 0 ? (
-                  <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded">
-                    <p className="text-gray-500 dark:text-gray-400">No items added to this menu yet.</p>
+                  <div className="p-8 text-center border border-gray-200 dark:border-gray-700 rounded">
+                    <p className="text-gray-500 dark:text-gray-400 text-lg">No items added to this menu yet.</p>
                   </div>
                 ) : (
                   <div className="border border-gray-200 dark:border-gray-700 rounded overflow-hidden">

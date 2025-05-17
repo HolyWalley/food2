@@ -152,8 +152,8 @@ const FoodsList = () => {
 
       {filteredFoods?.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">No foods found matching your criteria.</p>
-          <Link to="/foods/new" className="btn btn-primary mt-4">
+          <p className="text-gray-500 dark:text-gray-400 text-lg mb-8">No foods found matching your criteria.</p>
+          <Link to="/foods/new" className="btn btn-primary">
             Add New Food
           </Link>
         </div>

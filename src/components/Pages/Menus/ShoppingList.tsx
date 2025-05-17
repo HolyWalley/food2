@@ -269,8 +269,8 @@ const ShoppingList = () => {
         </div>
 
         {!shoppingList || shoppingList.length === 0 ? (
-          <div className="p-4 text-center border border-gray-200 dark:border-gray-700 rounded">
-            <p className="text-gray-500 dark:text-gray-400">No items in shopping list. Add foods or recipes to your menu first.</p>
+          <div className="p-8 text-center border border-gray-200 dark:border-gray-700 rounded">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">No items in shopping list. Add foods or recipes to your menu first.</p>
           </div>
         ) : (
           <>

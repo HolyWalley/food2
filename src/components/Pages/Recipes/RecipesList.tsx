@@ -112,12 +112,12 @@ const RecipesList = () => {
 
       {!filteredRecipes || filteredRecipes.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 dark:text-gray-400 text-lg">
+          <p className="text-gray-500 dark:text-gray-400 text-lg mb-8">
             {recipes && recipes.length > 0 
               ? 'No recipes found matching your criteria.' 
               : 'No recipes yet. Get started by adding your first recipe!'}
           </p>
-          <Link to="/recipes/new" className="btn btn-primary mt-4">
+          <Link to="/recipes/new" className="btn btn-primary">
             Add New Recipe
           </Link>
         </div>
