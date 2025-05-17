@@ -12,10 +12,11 @@ export class MenuService {
    * Create a new menu
    */
   async createMenu(menu: Omit<Menu, '_id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Menu> {
+    const timestamp = new Date().toISOString();
     const newMenu = createMenuDocument({
       _id: `menu_${uuidv4()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: timestamp,
+      updatedAt: timestamp,
       ...menu
     });
 
@@ -62,27 +63,6 @@ export class MenuService {
     }
   }
 
-  /**
-   * Get menus by date range
-   */
-  async getMenusByDateRange(startDate: string, endDate: string): Promise<Menu[]> {
-    console.log(`MenuService.getMenusByDateRange called: ${startDate} to ${endDate}`);
-    
-    try {
-      // For date range queries, using an in-memory approach is more reliable
-      // First get all menus
-      const allMenus = await this.getAllMenus();
-      
-      // Then filter by date range and sort chronologically (ascending)
-      return allMenus
-        .filter(menu => menu.date >= startDate && menu.date <= endDate)
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    } catch (error) {
-      console.error(`Error in getMenusByDateRange for ${startDate} to ${endDate}:`, error);
-      console.warn('Returning empty array as last resort');
-      return [];
-    }
-  }
 
   /**
    * Calculate the total nutritional information for a menu

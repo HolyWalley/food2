@@ -215,6 +215,26 @@ const Dashboard = () => {
           </Link>
         ))}
       </div>
+      
+      {/* App Updates and Migrations */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-medium dark:text-gray-200">Database Maintenance</h3>
+          <a
+            href="/migrateMenus.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-sm btn-secondary flex items-center"
+          >
+            <span className="material-symbols-outlined text-sm mr-1">update</span>
+            Migrate Menus
+          </a>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          If you've updated the app recently, you may need to migrate your menus to the new format (without dates).
+          Click the button to run the migration tool.
+        </p>
+      </div>
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">

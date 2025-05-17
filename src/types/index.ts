@@ -77,7 +77,6 @@ export interface Menu extends BaseDocument {
   type: 'menu';
   name: string;
   description: string;
-  date: string; // ISO date format
   items: MenuItem[];
   tags?: string[];
 }

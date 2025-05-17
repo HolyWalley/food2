@@ -109,13 +109,6 @@ const MenuDetails = () => {
     );
   }
 
-  // Format date for display
-  const formattedDate = new Date(menu.date).toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 
   return (
     <div className="container mx-auto p-4">
@@ -146,20 +139,12 @@ const MenuDetails = () => {
             <div className="p-6">
               <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
                 <div>
-                  <div className="flex items-center">
-                    <h1 
-                      className="text-2xl font-bold text-gray-800 dark:text-gray-200"
-                      style={{ viewTransitionName: `menu-title-${menu._id}` }}
-                    >
-                      {menu.name}
-                    </h1>
-                    <span 
-                      className="ml-3 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-sm px-3 py-1 rounded"
-                      style={{ viewTransitionName: `menu-date-badge-${menu._id}` }}
-                    >
-                      {new Date(menu.date).toLocaleDateString()}
-                    </span>
-                  </div>
+                  <h1 
+                    className="text-2xl font-bold text-gray-800 dark:text-gray-200"
+                    style={{ viewTransitionName: `menu-title-${menu._id}` }}
+                  >
+                    {menu.name}
+                  </h1>
                   <p 
                     className="text-gray-600 dark:text-gray-400 mt-1"
                     style={{ viewTransitionName: `menu-description-${menu._id}` }}
@@ -191,8 +176,8 @@ const MenuDetails = () => {
                 style={{ viewTransitionName: `menu-items-${menu._id}` }}
               >
                 <div className="flex items-center mr-4">
-                  <span className="material-symbols-outlined text-sm mr-1">calendar_today</span>
-                  <span>{formattedDate}</span>
+                  <span className="material-symbols-outlined text-sm mr-1">update</span>
+                  <span>Updated: {new Date(menu.updatedAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center">
                   <span className="material-symbols-outlined text-sm mr-1">restaurant_menu</span>

@@ -8,7 +8,6 @@ import { withViewTransition } from '../../../utils/viewTransition';
 
 const MenusList = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -35,23 +34,19 @@ const MenusList = () => {
     }
   };
 
-  // Filter menus based on search term and date
+  // Filter menus based on search term
   const filteredMenus = menus?.filter(menu => {
     const matchesSearch =
       menu.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       menu.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (menu.tags && menu.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
 
-    const matchesDate =
-      dateFilter === '' || 
-      (dateFilter && menu.date === dateFilter);
-
-    return matchesSearch && matchesDate;
+    return matchesSearch;
   });
 
-  // Sort menus by date (newest first)
+  // Sort menus by creation date (newest first)
   const sortedMenus = filteredMenus?.sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   // Handle search
@@ -59,15 +54,6 @@ const MenusList = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Handle date filter change
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateFilter(e.target.value);
-  };
-  
-  // Clear date filter
-  const clearDateFilter = () => {
-    setDateFilter('');
-  };
 
   // Render loading state
   if (isLoading) {
@@ -128,22 +114,6 @@ const MenusList = () => {
               onChange={handleSearch}
             />
           </div>
-          <div className="w-full md:w-48 flex">
-            <input
-              type="date"
-              className="form-input"
-              value={dateFilter}
-              onChange={handleDateChange}
-            />
-            {dateFilter && (
-              <button 
-                onClick={clearDateFilter}
-                className="ml-2 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -177,13 +147,6 @@ const MenuCard = ({ menu }: { menu: Menu }) => {
     }, 'menu-to-details');
   };
   
-  // Format date nicely
-  const formattedDate = new Date(menu.date).toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 
   return (
     <Link
@@ -193,20 +156,12 @@ const MenuCard = ({ menu }: { menu: Menu }) => {
       style={{ viewTransitionName: `menu-card-container-${menu._id}` }}
     >
       <div className="p-6">
-        <div className="flex justify-between items-start">
-          <h2 
-            className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100"
-            style={{ viewTransitionName: `menu-title-${menu._id}` }}
-          >
-            {menu.name}
-          </h2>
-          <span 
-            className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 text-xs px-2 py-1 rounded"
-            style={{ viewTransitionName: `menu-date-badge-${menu._id}` }}
-          >
-            {new Date(menu.date).toLocaleDateString()}
-          </span>
-        </div>
+        <h2 
+          className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-100"
+          style={{ viewTransitionName: `menu-title-${menu._id}` }}
+        >
+          {menu.name}
+        </h2>
 
         <p 
           className="text-gray-600 dark:text-gray-400 mb-4 text-sm"
@@ -222,8 +177,8 @@ const MenuCard = ({ menu }: { menu: Menu }) => {
           </div>
           
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="material-symbols-outlined text-sm mr-1">calendar_today</span>
-            <span>{formattedDate}</span>
+            <span className="material-symbols-outlined text-sm mr-1">update</span>
+            <span>Updated: {new Date(menu.updatedAt).toLocaleDateString()}</span>
           </div>
         </div>
 

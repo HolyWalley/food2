@@ -75,7 +75,6 @@ export interface MenuDocument extends BaseDocument {
   type: 'menu';
   name: string;
   description: string;
-  date: string;
   items: MenuItem[];
   tags?: string[];
 }

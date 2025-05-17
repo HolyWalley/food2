@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu Migration Tool</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="max-w-lg w-full bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Menu Migration Tool</h1>
+    
+    <div class="mb-6">
+      <p class="text-gray-700 mb-3">
+        This tool will update all your menus to the new schema that doesn't include dates.
+        Your menus will now be flexible collections that can be used for any time period.
+      </p>
+      <p class="text-gray-700 mb-3">
+        This migration is necessary after updating to the newest version of the app.
+      </p>
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-yellow-700">
+              Before running this migration, make sure you don't have the app open in other tabs.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <button 
+      id="migrateButton"
+      class="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+    >
+      Run Migration
+    </button>
+    
+    <div id="status" class="mt-4 text-gray-700"></div>
+    <div id="log" class="mt-4 bg-gray-100 p-3 rounded-md text-sm font-mono h-48 overflow-y-auto hidden"></div>
+  </div>
+  
+  <script type="module">
+    import migrateMenus from '../src/scripts/migrateMenus.js';
+    
+    const migrateButton = document.getElementById('migrateButton');
+    const status = document.getElementById('status');
+    const log = document.getElementById('log');
+    
+    // Override console.log to capture output
+    const originalLog = console.log;
+    const originalError = console.error;
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      appendToLog('log', args.join(' '));
+    };
+    
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      appendToLog('error', args.join(' '));
+    };
+    
+    function appendToLog(type, message) {
+      if (log.classList.contains('hidden')) {
+        log.classList.remove('hidden');
+      }
+      
+      const line = document.createElement('div');
+      line.className = type === 'error' ? 'text-red-600' : '';
+      line.textContent = message;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+    
+    migrateButton.addEventListener('click', async () => {
+      try {
+        migrateButton.disabled = true;
+        migrateButton.textContent = 'Migration Running...';
+        status.textContent = 'Migration in progress. Please don\'t close this page...';
+        
+        // Small delay to allow UI to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        await migrateMenus();
+        
+        status.textContent = 'Migration completed successfully! You can now close this page.';
+        migrateButton.textContent = 'Migration Complete';
+        migrateButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        migrateButton.classList.add('bg-green-500', 'hover:bg-green-600');
+      } catch (error) {
+        console.error('Migration failed:', error);
+        status.textContent = 'Migration failed. Check the log for details.';
+        migrateButton.textContent = 'Migration Failed';
+        migrateButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        migrateButton.classList.add('bg-red-500', 'hover:bg-red-600');
+      }
+    });
+  </script>
+</body>
+</html>

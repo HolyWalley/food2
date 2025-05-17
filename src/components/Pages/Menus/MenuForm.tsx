@@ -16,7 +16,6 @@ const MenuForm = () => {
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Today's date in YYYY-MM-DD format
   const [items, setItems] = useState<MenuItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
@@ -81,7 +80,6 @@ const MenuForm = () => {
     if (existingMenu) {
       setName(existingMenu.name);
       setDescription(existingMenu.description);
-      setDate(existingMenu.date);
       setItems(existingMenu.items);
       setTags(existingMenu.tags || []);
     }
@@ -95,11 +93,6 @@ const MenuForm = () => {
     // Validate form
     if (!name) {
       setError('Menu name is required');
-      return;
-    }
-
-    if (!date) {
-      setError('Date is required');
       return;
     }
 
@@ -123,7 +116,6 @@ const MenuForm = () => {
           ...existingMenu,
           name,
           description,
-          date,
           items,
           tags,
           updatedAt: new Date().toISOString()
@@ -132,7 +124,6 @@ const MenuForm = () => {
         createMutation.mutate({
           name,
           description,
-          date,
           items,
           tags
         });
@@ -273,19 +264,6 @@ const MenuForm = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date*
-              </label>
-              <input
-                type="date"
-                id="date"
-                className="form-input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </div>
           </div>
 
           {/* Menu items section */}
