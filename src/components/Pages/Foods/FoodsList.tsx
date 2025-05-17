@@ -5,6 +5,7 @@ import foodService from '../../../services/foodService';
 import db from '../../../services/db';
 import { type Food } from '../../../types';
 import { withViewTransition } from '../../../utils/viewTransition';
+import { Select } from '../../../components/UI';
 
 const FoodsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,17 +135,17 @@ const FoodsList = () => {
             />
           </div>
           <div className="w-full md:w-48">
-            <select
-              className="form-input"
+            <Select
               value={categoryFilter}
               onChange={handleCategoryChange}
+              aria-label="Filter by category"
             >
               {categories.map(category => (
                 <option key={category} value={category}>
                   {category}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
       </div>
