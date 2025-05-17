@@ -31,7 +31,7 @@ const FoodForm = () => {
   const [newAllergen, setNewAllergen] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [showNutritionixSearch, setShowNutritionixSearch] = useState(!isEditMode);
-  
+
   // Calculate calories from macros in real-time
   const calculatedCalories = useMemo(() => {
     return foodService.calculateCaloriesFromMacros(protein, carbs, fat);
@@ -56,7 +56,7 @@ const FoodForm = () => {
     // Weight units
     'g', 'kg', 'oz', 'lb',
     // Volume units
-    'ml', 'l', 'cup', 'tbsp', 'tsp', 
+    'ml', 'l', 'cup', 'tbsp', 'tsp',
     // Count units
     'piece', 'serving',
     // Size descriptors
@@ -64,7 +64,7 @@ const FoodForm = () => {
     // Common food units
     'clove', 'slice', 'can', 'bottle', 'packet', 'container'
   ];
-  
+
   // Unit categories for grouping in select
   const unitCategories = {
     weight: ['g', 'kg', 'oz', 'lb'],
@@ -146,7 +146,7 @@ const FoodForm = () => {
       setError('Serving size must be greater than zero');
       return;
     }
-    
+
     // Validate weight in grams for descriptive units
     if (unitCategories.descriptive.includes(servingUnit) && (!servingWeightGrams || servingWeightGrams <= 0)) {
       setError('Weight in grams is required for descriptive units like small, medium, large, etc.');
@@ -173,12 +173,12 @@ const FoodForm = () => {
       unit: servingUnit,
       weightInGrams: servingWeightGrams
     };
-    
+
     // Automatically set weightInGrams to equal serving size if unit is 'g'
     if (servingUnit === 'g' && servingWeightGrams === undefined) {
       serving.weightInGrams = servingSize;
     }
-    
+
     const finalNutrients = nutrients;
 
     if (isEditMode && foodData) {
@@ -233,7 +233,7 @@ const FoodForm = () => {
   const removeAllergen = (allergen: string) => {
     setAllergens(allergens.filter(a => a !== allergen));
   };
-  
+
   // Handle food selection from Nutritionix
   const handleFoodSelect = (foodData: FoodData) => {
     setName(foodData.name);
@@ -244,16 +244,16 @@ const FoodForm = () => {
     setProtein(foodData.nutrients.protein);
     setCarbs(foodData.nutrients.carbs);
     setFat(foodData.nutrients.fat);
-    
+
     // Set optional nutrients if available
     if (foodData.nutrients.fiber !== undefined) setFiber(foodData.nutrients.fiber);
     if (foodData.nutrients.sugar !== undefined) setSugar(foodData.nutrients.sugar);
     if (foodData.nutrients.sodium !== undefined) setSodium(foodData.nutrients.sodium);
     if (foodData.nutrients.cholesterol !== undefined) setCholesterol(foodData.nutrients.cholesterol);
-    
+
     // Hide the search after selection
     setShowNutritionixSearch(false);
-    
+
     // Add food name as a tag if not already present
     if (!tags.includes(foodData.name.toLowerCase())) {
       setTags([...tags, foodData.name.toLowerCase()]);
@@ -288,7 +288,7 @@ const FoodForm = () => {
           {/* Basic Information */}
           <div>
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Basic Information</h2>
-            
+
             {showNutritionixSearch && (
               <div className="mb-4 bg-primary-50 dark:bg-primary-900/20 p-4 rounded-lg border border-primary-100 dark:border-primary-800">
                 <div className="flex items-center justify-between mb-2">
@@ -309,7 +309,7 @@ const FoodForm = () => {
                 <FoodSearch onFoodSelect={handleFoodSelect} />
               </div>
             )}
-            
+
             {!showNutritionixSearch && (
               <div className="mb-4">
                 <button
@@ -322,7 +322,7 @@ const FoodForm = () => {
                 </button>
               </div>
             )}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="name" className="form-label dark:text-gray-300">Name</label>
@@ -366,9 +366,12 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={servingSize}
-                  onChange={(e) => setServingSize(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setServingSize(value === '' ? 0 : parseFloat(value));
+                  }}
                   min="0"
-                  step="0.1"
+                  step="0.01"
                   required
                 />
               </div>
@@ -407,7 +410,7 @@ const FoodForm = () => {
                 <div>
                   <label htmlFor="servingWeightGrams" className="form-label dark:text-gray-300">
                     Weight in Grams
-                    <span 
+                    <span
                       className="ml-1 inline-flex items-center text-gray-500 dark:text-gray-400 cursor-help"
                       title="Equivalent weight in grams for the serving size (useful for nutrition calculations)"
                     >
@@ -419,11 +422,11 @@ const FoodForm = () => {
                     type="number"
                     className="form-input"
                     value={servingWeightGrams === undefined ? '' : servingWeightGrams}
-                    onChange={(e) => 
+                    onChange={(e) =>
                       setServingWeightGrams(e.target.value === '' ? undefined : parseFloat(e.target.value))
                     }
                     min="0"
-                    step="0.1"
+                    step="0.01"
                     required={unitCategories.descriptive.includes(servingUnit)}
                   />
                   {unitCategories.descriptive.includes(servingUnit) && (
@@ -443,7 +446,7 @@ const FoodForm = () => {
               <div>
                 <label htmlFor="calories" className="form-label dark:text-gray-300">
                   Calories
-                  <span 
+                  <span
                     className="ml-1 inline-flex items-center text-gray-500 dark:text-gray-400 cursor-help"
                     title="Calculated using 4 cal/g for protein and carbs, 9 cal/g for fat"
                   >
@@ -474,9 +477,12 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={protein}
-                  onChange={(e) => setProtein(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setProtein(value === '' ? 0 : parseFloat(value));
+                  }}
                   min="0"
-                  step="0.1"
+                  step="0.01"
                   required
                 />
               </div>
@@ -487,9 +493,12 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={carbs}
-                  onChange={(e) => setCarbs(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCarbs(value === '' ? 0 : parseFloat(value));
+                  }}
                   min="0"
-                  step="0.1"
+                  step="0.01"
                   required
                 />
               </div>
@@ -500,9 +509,12 @@ const FoodForm = () => {
                   type="number"
                   className="form-input"
                   value={fat}
-                  onChange={(e) => setFat(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFat(value === '' ? 0 : parseFloat(value));
+                  }}
                   min="0"
-                  step="0.1"
+                  step="0.01"
                   required
                 />
               </div>
@@ -517,7 +529,7 @@ const FoodForm = () => {
                     setFiber(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
-                  step="0.1"
+                  step="0.01"
                 />
               </div>
               <div>
@@ -531,7 +543,7 @@ const FoodForm = () => {
                     setSugar(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
-                  step="0.1"
+                  step="0.01"
                 />
               </div>
               <div>
@@ -545,7 +557,7 @@ const FoodForm = () => {
                     setSodium(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
-                  step="1"
+                  step="0.01"
                 />
               </div>
               <div>
@@ -559,7 +571,7 @@ const FoodForm = () => {
                     setCholesterol(e.target.value === '' ? undefined : parseFloat(e.target.value))
                   }
                   min="0"
-                  step="1"
+                  step="0.01"
                 />
               </div>
             </div>

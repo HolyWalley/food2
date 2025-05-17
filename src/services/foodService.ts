@@ -18,8 +18,8 @@ export class FoodService {
     const caloriesFromCarbs = carbs * 4;
     const caloriesFromFat = fat * 9;
     
-    // Round to 1 decimal place
-    const totalCalories = Math.round((caloriesFromProtein + caloriesFromCarbs + caloriesFromFat) * 10) / 10;
+    // Round to 2 decimal places
+    const totalCalories = Math.round((caloriesFromProtein + caloriesFromCarbs + caloriesFromFat) * 100) / 100;
     
     console.log(`Calories calculation:
       - From protein: ${protein}g × 4 = ${caloriesFromProtein} calories
@@ -186,9 +186,9 @@ export class FoodService {
     }
     
     // Calculate the nutritional values based on the quantity
-    const adjustedProtein = Math.round((food.nutrients.protein * conversionFactor) * 100) / 100;
-    const adjustedCarbs = Math.round((food.nutrients.carbs * conversionFactor) * 100) / 100;
-    const adjustedFat = Math.round((food.nutrients.fat * conversionFactor) * 100) / 100;
+    const adjustedProtein = Math.round((food.nutrients.protein * conversionFactor) * 1000) / 1000;
+    const adjustedCarbs = Math.round((food.nutrients.carbs * conversionFactor) * 1000) / 1000;
+    const adjustedFat = Math.round((food.nutrients.fat * conversionFactor) * 1000) / 1000;
     
     // Calculate calories from the adjusted macros
     const calculatedCalories = this.calculateCaloriesFromMacros(
@@ -213,22 +213,22 @@ export class FoodService {
     
     // Add optional nutrients if they exist
     if (food.nutrients.fiber !== undefined) {
-      result.fiber = Math.round((food.nutrients.fiber * conversionFactor) * 100) / 100;
+      result.fiber = Math.round((food.nutrients.fiber * conversionFactor) * 1000) / 1000;
       console.log(`Fiber: ${food.nutrients.fiber}g × ${conversionFactor} = ${result.fiber}g`);
     }
     
     if (food.nutrients.sugar !== undefined) {
-      result.sugar = Math.round((food.nutrients.sugar * conversionFactor) * 100) / 100;
+      result.sugar = Math.round((food.nutrients.sugar * conversionFactor) * 1000) / 1000;
       console.log(`Sugar: ${food.nutrients.sugar}g × ${conversionFactor} = ${result.sugar}g`);
     }
     
     if (food.nutrients.sodium !== undefined) {
-      result.sodium = Math.round((food.nutrients.sodium * conversionFactor) * 100) / 100;
+      result.sodium = Math.round((food.nutrients.sodium * conversionFactor) * 1000) / 1000;
       console.log(`Sodium: ${food.nutrients.sodium}mg × ${conversionFactor} = ${result.sodium}mg`);
     }
     
     if (food.nutrients.cholesterol !== undefined) {
-      result.cholesterol = Math.round((food.nutrients.cholesterol * conversionFactor) * 100) / 100;
+      result.cholesterol = Math.round((food.nutrients.cholesterol * conversionFactor) * 1000) / 1000;
       console.log(`Cholesterol: ${food.nutrients.cholesterol}mg × ${conversionFactor} = ${result.cholesterol}mg`);
     }
     
@@ -236,7 +236,7 @@ export class FoodService {
     if (food.nutrients.vitamins) {
       result.vitamins = {};
       for (const [vitamin, value] of Object.entries(food.nutrients.vitamins)) {
-        result.vitamins[vitamin] = Math.round((value * conversionFactor) * 100) / 100;
+        result.vitamins[vitamin] = Math.round((value * conversionFactor) * 1000) / 1000;
         console.log(`Vitamin ${vitamin}: ${value} × ${conversionFactor} = ${result.vitamins[vitamin]}`);
       }
     }
@@ -244,7 +244,7 @@ export class FoodService {
     if (food.nutrients.minerals) {
       result.minerals = {};
       for (const [mineral, value] of Object.entries(food.nutrients.minerals)) {
-        result.minerals[mineral] = Math.round((value * conversionFactor) * 100) / 100;
+        result.minerals[mineral] = Math.round((value * conversionFactor) * 1000) / 1000;
         console.log(`Mineral ${mineral}: ${value} × ${conversionFactor} = ${result.minerals[mineral]}`);
       }
     }
