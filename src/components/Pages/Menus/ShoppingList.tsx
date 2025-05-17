@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
@@ -14,6 +14,7 @@ const ShoppingList = () => {
   const navigate = useNavigate();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [checkedItems, setCheckedItems] = useState<CheckedItemsState>({});
+  const [days, setDays] = useState<number>(1);
   const printRef = useRef<HTMLDivElement>(null);
   
   // Reset checked state on component mount (page reload)
@@ -39,15 +40,23 @@ const ShoppingList = () => {
     enabled: !!menu
   });
   
+  // Scale shopping list items by the number of days
+  const scaledShoppingList = useMemo(() => {
+    return shoppingList?.map(item => ({
+      ...item,
+      quantity: parseFloat((item.quantity * days).toFixed(2))
+    }));
+  }, [shoppingList, days]);
+  
   // Get unique categories from shopping list
   const categories = Array.from(
-    new Set(shoppingList?.map(item => item.category) || [])
+    new Set(scaledShoppingList?.map(item => item.category) || [])
   ).sort();
 
   // Filter shopping list by selected categories
   const filteredList = selectedCategories.length > 0
-    ? shoppingList?.filter(item => selectedCategories.includes(item.category))
-    : shoppingList;
+    ? scaledShoppingList?.filter(item => selectedCategories.includes(item.category))
+    : scaledShoppingList;
 
   // Toggle category selection
   const toggleCategory = (category: string) => {
@@ -83,7 +92,8 @@ const ShoppingList = () => {
     // Only check items that are currently visible (based on category filter)
     if (filteredList) {
       filteredList.forEach((item) => {
-        const itemKey = `${item.foodId}-${item.quantity}-${item.unit}`;
+        // Use a stable key that doesn't include the scaled quantity
+        const itemKey = `${item.foodId}-${item.unit}`;
         newCheckedItems[itemKey] = true;
       });
     }
@@ -140,6 +150,7 @@ const ShoppingList = () => {
               day: 'numeric'
             }) : ''
           }</p>
+          ${days > 1 ? `<p style="text-align: center; margin-bottom: 20px; color: #666;">Quantities for ${days} days</p>` : ''}
           ${printContent.outerHTML}
         </div>
       `;
@@ -236,24 +247,49 @@ const ShoppingList = () => {
                 day: 'numeric'
               })}
             </p>
+            
+            {/* Days control */}
+            <div className="mt-3 flex items-center">
+              <span className="text-gray-700 dark:text-gray-300 text-sm mr-2">Days:</span>
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded">
+                <button
+                  onClick={() => setDays(prev => Math.max(1, prev - 1))}
+                  className="px-2 py-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                  aria-label="Decrease days"
+                  disabled={days <= 1}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>remove</span>
+                </button>
+                <span className="px-3 py-1 min-w-[40px] text-center text-gray-800 dark:text-gray-200 font-medium">
+                  {days}
+                </span>
+                <button
+                  onClick={() => setDays(prev => prev + 1)}
+                  className="px-2 py-1 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                  aria-label="Increase days"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>add</span>
+                </button>
+              </div>
+            </div>
           </div>
           
           <div className="mt-4 sm:mt-0 flex items-center space-x-4">
-            {shoppingList && shoppingList.length > 0 && (
+            {scaledShoppingList && scaledShoppingList.length > 0 && (
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center">
                   <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mr-2">
                     <div 
                       className="bg-primary-600 dark:bg-primary-500 h-2.5 rounded-full" 
                       style={{ 
-                        width: `${shoppingList.length > 0 
-                          ? (Object.values(checkedItems).filter(Boolean).length / shoppingList.length) * 100 
+                        width: `${scaledShoppingList?.length > 0 
+                          ? (Object.values(checkedItems).filter(Boolean).length / scaledShoppingList.length) * 100 
                           : 0}%` 
                       }}
                     ></div>
                   </div>
                   <span>
-                    {Object.values(checkedItems).filter(Boolean).length}/{shoppingList.length} items
+                    {Object.values(checkedItems).filter(Boolean).length}/{scaledShoppingList?.length} items
                   </span>
                 </div>
               </div>
@@ -268,7 +304,7 @@ const ShoppingList = () => {
           </div>
         </div>
 
-        {!shoppingList || shoppingList.length === 0 ? (
+        {!scaledShoppingList || scaledShoppingList.length === 0 ? (
           <div className="p-8 text-center border border-gray-200 dark:border-gray-700 rounded">
             <p className="text-gray-500 dark:text-gray-400 text-lg">No items in shopping list. Add foods or recipes to your menu first.</p>
           </div>
@@ -332,7 +368,7 @@ const ShoppingList = () => {
               {categories
                 .filter(category => selectedCategories.length === 0 || selectedCategories.includes(category))
                 .map(category => {
-                  const categoryItems = shoppingList.filter(item => item.category === category);
+                  const categoryItems = scaledShoppingList.filter(item => item.category === category);
                   if (categoryItems.length === 0) return null;
                 
                   return (
@@ -342,7 +378,8 @@ const ShoppingList = () => {
                       </h3>
                       <ul className="space-y-2">
                         {categoryItems.map((item, index) => {
-                          const itemKey = `${item.foodId}-${item.quantity}-${item.unit}`;
+                          // Use a stable key that doesn't include the scaled quantity
+                          const itemKey = `${item.foodId}-${item.unit}`;
                           const isChecked = !!checkedItems[itemKey];
                           
                           return (
@@ -377,6 +414,14 @@ const ShoppingList = () => {
                                   : 'text-gray-600 dark:text-gray-400'
                               }`}>
                                 {shoppingListService.formatQuantityAndUnit(item.quantity, item.unit)}
+                                {days > 1 && shoppingList && (
+                                  <span className="text-xs ml-1 text-gray-500">
+                                    (per day: {shoppingListService.formatQuantityAndUnit(
+                                      shoppingList.find(original => original.foodId === item.foodId && original.unit === item.unit)?.quantity || 0, 
+                                      item.unit
+                                    )})
+                                  </span>
+                                )}
                               </span>
                             </li>
                           );
@@ -388,14 +433,14 @@ const ShoppingList = () => {
             </div>
             
             {/* Shopping list summary */}
-            {shoppingList && shoppingList.length > 0 && (
+            {scaledShoppingList && scaledShoppingList.length > 0 && (
               <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between text-sm text-gray-600 dark:text-gray-400">
                 <div>
-                  Total items: <span className="font-medium">{shoppingList.length}</span>
+                  Total items: <span className="font-medium">{scaledShoppingList.length}</span>
                 </div>
                 <div>
                   Checked: <span className="font-medium">{Object.values(checkedItems).filter(Boolean).length}</span> | 
-                  Remaining: <span className="font-medium">{shoppingList.length - Object.values(checkedItems).filter(Boolean).length}</span>
+                  Remaining: <span className="font-medium">{scaledShoppingList.length - Object.values(checkedItems).filter(Boolean).length}</span>
                 </div>
               </div>
             )}
