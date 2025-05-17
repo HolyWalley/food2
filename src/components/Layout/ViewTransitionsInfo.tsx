@@ -3,12 +3,9 @@ import { supportsViewTransitions } from '../../utils/viewTransition';
 
 const ViewTransitionsInfo = () => {
   const [showMessage, setShowMessage] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
-
   useEffect(() => {
     // Check if the browser supports View Transitions API
     const supported = supportsViewTransitions();
-    setIsSupported(supported);
     setShowMessage(!supported);
 
     // Hide the message after 10 seconds
