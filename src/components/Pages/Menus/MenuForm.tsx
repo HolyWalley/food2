@@ -162,8 +162,8 @@ const MenuForm = () => {
       return;
     }
 
-    if (newItem.portions <= 0) {
-      setError('Portions must be greater than 0');
+    if (newItem.portions < 1) {
+      setError('Portions must be at least 1');
       return;
     }
 
@@ -193,6 +193,31 @@ const MenuForm = () => {
     
     // Force refetch of nutrition data
     queryClient.invalidateQueries({ queryKey: ['menuNutrition'] });
+  };
+  
+  // Update the portions for an item
+  const updateItemPortions = (index: number, newPortions: number) => {
+    // Ensure portions are valid
+    if (newPortions < 1) return;
+    
+    const updatedItems = [...items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      portions: newPortions
+    };
+    
+    setItems(updatedItems);
+    
+    // Force refetch of nutrition data
+    queryClient.invalidateQueries({ queryKey: ['menuNutrition'] });
+  };
+  
+  // Handle portions input change
+  const handlePortionsChange = (index: number, value: string) => {
+    const newPortions = parseFloat(value);
+    if (!isNaN(newPortions) && newPortions >= 1) {
+      updateItemPortions(index, newPortions);
+    }
   };
 
   // Add a tag
@@ -477,9 +502,9 @@ const MenuForm = () => {
                   <input
                     type="number"
                     id="portions"
-                    className="form-input"
-                    min="0.25"
-                    step="0.25"
+                    className="form-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="1"
+                    step="1"
                     value={newItem.portions}
                     onChange={(e) => setNewItem({ ...newItem, portions: parseFloat(e.target.value) || 0 })}
                   />
@@ -523,12 +548,43 @@ const MenuForm = () => {
                             {item.type === 'food' ? 'Food' : 'Recipe'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right dark:text-gray-200">{item.portions}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right dark:text-gray-200">
+                          <div className="flex items-center justify-end space-x-1">
+                            <button 
+                              type="button"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                              onClick={() => updateItemPortions(index, Math.max(1, item.portions - 1))}
+                              aria-label="Decrease portions"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
+                            </button>
+                            
+                            <input
+                              type="number"
+                              value={item.portions}
+                              onChange={(e) => handlePortionsChange(index, e.target.value)}
+                              step="1"
+                              min="1"
+                              className="w-16 text-right form-input py-1 px-2 dark:bg-gray-700 dark:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              aria-label="Portions"
+                            />
+                            
+                            <button 
+                              type="button"
+                              className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                              onClick={() => updateItemPortions(index, item.portions + 1)}
+                              aria-label="Increase portions"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+                            </button>
+                          </div>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <button
                             type="button"
                             className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                             onClick={() => removeItem(index)}
+                            aria-label="Remove item"
                           >
                             <span className="material-symbols-outlined">delete</span>
                           </button>
