@@ -6,7 +6,7 @@ type ThemeContextType = {
   toggleDarkMode: () => void;
 };
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   // Check if user has previously set a preference in localStorage

@@ -136,6 +136,38 @@ export class FoodService {
       (food.tags && food.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
     );
   }
+  
+  /**
+   * Get paginated foods with optional search term
+   */
+  async getPaginatedFoods(page = 1, limit = 10, searchTerm = ''): Promise<{foods: Food[], total: number}> {
+    try {
+      // Get all foods first (we'll paginate in memory since PouchDB doesn't have built-in pagination)
+      let filteredFoods: Food[];
+      
+      if (searchTerm) {
+        filteredFoods = await this.searchFoods(searchTerm);
+      } else {
+        filteredFoods = await this.getAllFoods();
+      }
+      
+      // Sort foods alphabetically by name
+      filteredFoods.sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Calculate pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      
+      // Return the paginated subset
+      return {
+        foods: filteredFoods.slice(startIndex, endIndex),
+        total: filteredFoods.length
+      };
+    } catch (error) {
+      console.error('Error getting paginated foods:', error);
+      return { foods: [], total: 0 };
+    }
+  }
 
   /**
    * Get food items by category

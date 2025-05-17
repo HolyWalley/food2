@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
 import foodService from '../../../services/foodService';
-import { Select } from '../../../components/UI';
+import { Select, PaginatedSelect } from '../../../components/UI';
 import { unitCategories, standardUnits } from '../../../utils/nutritionixUtils';
 import type { Recipe, RecipeIngredient, Food } from '../../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -186,7 +186,7 @@ const RecipeForm = () => {
     enabled: isEditMode
   });
 
-  // Fetch all foods for the ingredient dropdown
+  // Fetch all foods for the ingredient dropdown - used for displaying existing ingredients
   const { data: foods, isLoading: foodsLoading } = useQuery({
     queryKey: ['foods'],
     queryFn: foodService.getAllFoods
@@ -705,30 +705,48 @@ const RecipeForm = () => {
               <h3 className="text-md font-medium mb-3 text-gray-700 dark:text-gray-300">Add Ingredient</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-2">
-                  <Select
-                    id="foodId"
+                  <PaginatedSelect
                     label="Food"
-                    value={newIngredient.foodId}
-                    onChange={(e) => {
-                      const selectedFoodId = e.target.value;
-                      const selectedFood = foods?.find(f => f._id === selectedFoodId);
-
-                      // Update with the selected food ID and set the unit to match the food's unit if available
-                      setNewIngredient({
-                        ...newIngredient,
-                        foodId: selectedFoodId,
-                        unit: selectedFood?.serving?.unit || 'g' // Default to 'g' if no unit found
-                      });
+                    placeholder="Search foods..."
+                    loadOptions={async (page, search, limit) => {
+                      const { foods, total } = await foodService.getPaginatedFoods(page, limit, search);
+                      return {
+                        options: foods.map(food => ({
+                          value: food._id,
+                          label: food.name,
+                          data: food
+                        })),
+                        hasMore: total > page * limit,
+                        total
+                      };
                     }}
-                    disabled={foodsLoading}
-                  >
-                    <option value="">Select a food...</option>
-                    {foods?.map(food => (
-                      <option key={food._id} value={food._id}>
-                        {food.name}
-                      </option>
-                    ))}
-                  </Select>
+                    onChange={(selectedOption) => {
+                      if (selectedOption) {
+                        const selectedFood = selectedOption.data;
+                        setNewIngredient({
+                          ...newIngredient,
+                          foodId: selectedOption.value,
+                          unit: selectedFood?.serving?.unit || 'g' // Default to 'g' if no unit found
+                        });
+                      } else {
+                        // Handle clear
+                        setNewIngredient({
+                          ...newIngredient,
+                          foodId: '',
+                          unit: 'g'
+                        });
+                      }
+                    }}
+                    value={newIngredient.foodId ? {
+                      value: newIngredient.foodId,
+                      label: foods?.find(f => f._id === newIngredient.foodId)?.name || 'Loading...'
+                    } : null}
+                    isDisabled={foodsLoading}
+                    isClearable={true}
+                    noOptionsMessage="No foods found. Try a different search term."
+                    limit={20}
+                    aria-label="Select food for ingredient"
+                  />
                 </div>
                 <div>
                   <label htmlFor="quantity" className="form-label dark:text-gray-300">Quantity</label>

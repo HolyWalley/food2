@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import menuService from '../../../services/menuService';
 import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
-import { Select } from '../../../components/UI';
+import { Select, PaginatedSelect } from '../../../components/UI';
 import { type MenuItem, type Food, type Recipe } from '../../../types';
 
 const MenuForm = () => {
@@ -285,20 +285,87 @@ const MenuForm = () => {
               </div>
 
               <div className="col-span-2">
-                <Select
-                  id="itemId"
-                  label={newItem.type === 'food' ? 'Food' : 'Recipe'}
-                  value={newItem.itemId}
-                  onChange={(e) => setNewItem({ ...newItem, itemId: e.target.value })}
-                >
-                  <option value="">Select {newItem.type === 'food' ? 'a food' : 'a recipe'}</option>
-                  {newItem.type === 'food' && foods?.map(food => (
-                    <option key={food._id} value={food._id}>{food.name}</option>
-                  ))}
-                  {newItem.type === 'recipe' && recipes?.map(recipe => (
-                    <option key={recipe._id} value={recipe._id}>{recipe.name}</option>
-                  ))}
-                </Select>
+                {newItem.type === 'food' ? (
+                  <PaginatedSelect
+                    label="Food"
+                    placeholder="Search foods..."
+                    loadOptions={async (page, search, limit) => {
+                      const { foods, total } = await foodService.getPaginatedFoods(page, limit, search);
+                      return {
+                        options: foods.map(food => ({
+                          value: food._id,
+                          label: food.name,
+                          data: food
+                        })),
+                        hasMore: total > page * limit,
+                        total
+                      };
+                    }}
+                    onChange={(selectedOption) => {
+                      if (selectedOption) {
+                        setNewItem({
+                          ...newItem,
+                          itemId: selectedOption.value
+                        });
+                      } else {
+                        // Handle clear
+                        setNewItem({
+                          ...newItem,
+                          itemId: ''
+                        });
+                      }
+                    }}
+                    value={newItem.itemId && newItem.type === 'food' ? {
+                      value: newItem.itemId,
+                      label: foods?.find(f => f._id === newItem.itemId)?.name || 'Loading...'
+                    } : null}
+                    isDisabled={foodsLoading}
+                    isClearable={true}
+                    noOptionsMessage="No foods found. Try a different search term."
+                    limit={20}
+                    aria-label="Select food for menu item"
+                  />
+                ) : (
+                  <PaginatedSelect
+                    label="Recipe"
+                    placeholder="Search recipes..."
+                    loadOptions={async (page, search, limit) => {
+                      const { recipes, total } = await recipeService.getPaginatedRecipes(page, limit, search);
+                      return {
+                        options: recipes.map(recipe => ({
+                          value: recipe._id,
+                          label: recipe.name,
+                          data: recipe
+                        })),
+                        hasMore: total > page * limit,
+                        total
+                      };
+                    }}
+                    onChange={(selectedOption) => {
+                      if (selectedOption) {
+                        setNewItem({
+                          ...newItem,
+                          itemId: selectedOption.value
+                        });
+                      } else {
+                        // Handle clear
+                        setNewItem({
+                          ...newItem,
+                          itemId: ''
+                        });
+                      }
+                    }}
+                    value={newItem.itemId && newItem.type === 'recipe' ? {
+                      value: newItem.itemId,
+                      label: recipes?.find(r => r._id === newItem.itemId)?.name || 'Loading...'
+                    } : null}
+                    isDisabled={recipesLoading}
+                    isClearable={true}
+                    noOptionsMessage="No recipes found. Try a different search term."
+                    limit={20}
+                    aria-label="Select recipe for menu item"
+                  />
+                )}
               </div>
 
               <div className="col-span-1">

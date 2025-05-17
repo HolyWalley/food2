@@ -75,6 +75,38 @@ export class RecipeService {
       recipe.instructions.some(instruction => instruction.toLowerCase().includes(lowerQuery))
     );
   }
+  
+  /**
+   * Get paginated recipes with optional search term
+   */
+  async getPaginatedRecipes(page = 1, limit = 10, searchTerm = ''): Promise<{recipes: Recipe[], total: number}> {
+    try {
+      // Get all recipes first (we'll paginate in memory since PouchDB doesn't have built-in pagination)
+      let filteredRecipes: Recipe[];
+      
+      if (searchTerm) {
+        filteredRecipes = await this.searchRecipes(searchTerm);
+      } else {
+        filteredRecipes = await this.getAllRecipes();
+      }
+      
+      // Sort recipes alphabetically by name
+      filteredRecipes.sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Calculate pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      
+      // Return the paginated subset
+      return {
+        recipes: filteredRecipes.slice(startIndex, endIndex),
+        total: filteredRecipes.length
+      };
+    } catch (error) {
+      console.error('Error getting paginated recipes:', error);
+      return { recipes: [], total: 0 };
+    }
+  }
 
   /**
    * Calculate the nutritional information for a recipe
