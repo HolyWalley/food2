@@ -17,6 +17,7 @@ const FoodForm = () => {
   const [category, setCategory] = useState('');
   const [servingSize, setServingSize] = useState(100);
   const [servingUnit, setServingUnit] = useState('g');
+  const [servingWeightGrams, setServingWeightGrams] = useState<number | undefined>(undefined);
   const [protein, setProtein] = useState(0);
   const [carbs, setCarbs] = useState(0);
   const [fat, setFat] = useState(0);
@@ -67,6 +68,7 @@ const FoodForm = () => {
       setCategory(foodData.category);
       setServingSize(foodData.serving.size);
       setServingUnit(foodData.serving.unit);
+      setServingWeightGrams(foodData.serving.weightInGrams);
       setProtein(foodData.nutrients.protein);
       setCarbs(foodData.nutrients.carbs);
       setFat(foodData.nutrients.fat);
@@ -143,8 +145,16 @@ const FoodForm = () => {
     // Create serving info
     const serving: ServingInfo = {
       size: servingSize,
-      unit: servingUnit
+      unit: servingUnit,
+      weightInGrams: servingWeightGrams
     };
+    
+    // Automatically set weightInGrams to equal serving size if unit is 'g'
+    if (servingUnit === 'g' && servingWeightGrams === undefined) {
+      serving.weightInGrams = servingSize;
+    }
+    
+    const finalNutrients = nutrients;
 
     if (isEditMode && foodData) {
       // Update existing food
@@ -152,7 +162,7 @@ const FoodForm = () => {
         ...foodData,
         name,
         category,
-        nutrients,
+        nutrients: finalNutrients,
         serving,
         allergens: allergens.length > 0 ? allergens : undefined,
         tags: tags.length > 0 ? tags : undefined,
@@ -164,7 +174,7 @@ const FoodForm = () => {
       const newFood = {
         name,
         category,
-        nutrients,
+        nutrients: finalNutrients,
         serving,
         allergens: allergens.length > 0 ? allergens : undefined,
         tags: tags.length > 0 ? tags : undefined
@@ -205,6 +215,7 @@ const FoodForm = () => {
     setCategory(foodData.category);
     setServingSize(foodData.serving.size);
     setServingUnit(foodData.serving.unit);
+    setServingWeightGrams(foodData.serving.weightInGrams);
     setProtein(foodData.nutrients.protein);
     setCarbs(foodData.nutrients.carbs);
     setFat(foodData.nutrients.fat);
@@ -322,7 +333,7 @@ const FoodForm = () => {
           {/* Serving Information */}
           <div>
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Serving Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label htmlFor="servingSize" className="form-label dark:text-gray-300">Serving Size</label>
                 <input
@@ -351,6 +362,31 @@ const FoodForm = () => {
                   ))}
                 </Select>
               </div>
+              {/* Only show weight in grams field if unit is not 'g' */}
+              {servingUnit !== 'g' && (
+                <div>
+                  <label htmlFor="servingWeightGrams" className="form-label dark:text-gray-300">
+                    Weight in Grams
+                    <span 
+                      className="ml-1 inline-flex items-center text-gray-500 dark:text-gray-400 cursor-help"
+                      title="Equivalent weight in grams for the serving size (useful for nutrition calculations)"
+                    >
+                      <span className="material-symbols-outlined text-sm">info</span>
+                    </span>
+                  </label>
+                  <input
+                    id="servingWeightGrams"
+                    type="number"
+                    className="form-input"
+                    value={servingWeightGrams === undefined ? '' : servingWeightGrams}
+                    onChange={(e) => 
+                      setServingWeightGrams(e.target.value === '' ? undefined : parseFloat(e.target.value))
+                    }
+                    min="0"
+                    step="0.1"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

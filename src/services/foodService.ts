@@ -48,6 +48,11 @@ export class FoodService {
       }
     };
     
+    // Ensure weightInGrams is set for 'g' units
+    if (calculatedFood.serving.unit === 'g' && calculatedFood.serving.weightInGrams === undefined) {
+      calculatedFood.serving.weightInGrams = calculatedFood.serving.size;
+    }
+    
     const newFood = createFoodDocument({
       _id: `food_${uuidv4()}`,
       createdAt: new Date().toISOString(),
@@ -81,6 +86,11 @@ export class FoodService {
         )
       }
     };
+    
+    // Ensure weightInGrams is set for 'g' units
+    if (calculatedFood.serving.unit === 'g' && calculatedFood.serving.weightInGrams === undefined) {
+      calculatedFood.serving.weightInGrams = calculatedFood.serving.size;
+    }
     
     return await db.put(calculatedFood);
   }

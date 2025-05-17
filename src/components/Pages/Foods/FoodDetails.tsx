@@ -1,6 +1,8 @@
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import foodService from '../../../services/foodService';
+import type { NutritionInfo, ServingInfo } from '../../../types';
 import { withViewTransition } from '../../../utils/viewTransition';
 
 const FoodDetails = () => {
@@ -14,6 +16,7 @@ const FoodDetails = () => {
     queryFn: () => (id ? foodService.getFoodById(id) : Promise.reject('No ID provided')),
     enabled: !!id
   });
+  
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -119,6 +122,9 @@ const FoodDetails = () => {
                     style={{ viewTransitionName: `food-serving-${food._id}` }}
                   >
                     Serving size: {food.serving.size} {food.serving.unit}
+                    {food.serving.weightInGrams && food.serving.unit !== 'g' && (
+                      <span className="text-xs ml-1">({food.serving.weightInGrams}g)</span>
+                    )}
                   </p>
                 </div>
                 

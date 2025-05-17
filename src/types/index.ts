@@ -24,6 +24,7 @@ export interface NutritionInfo {
 export interface ServingInfo {
   size: number;
   unit: string;
+  weightInGrams?: number;  // Weight equivalent in grams (for conversion calculations)
 }
 
 // Food item document

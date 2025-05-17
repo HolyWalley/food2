@@ -154,7 +154,9 @@ const FoodSearch: React.FC<FoodSearchProps> = ({
         },
         serving: {
           size: nutritionixFood.serving_qty,
-          unit: nutritionixFood.serving_unit
+          unit: nutritionixFood.serving_unit,
+          weightInGrams: nutritionixFood.serving_weight_grams,
+          isStandard: false // Raw data from API is not standardized
         },
         // Make a best guess at the category based on Nutritionix data
         category: nutritionixFood.food_name.includes('chicken') || nutritionixFood.food_name.includes('beef') 
