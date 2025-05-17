@@ -305,6 +305,39 @@ const RecipeForm = () => {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
+  // Update an ingredient's quantity
+  const updateIngredientQuantity = (index: number, newQuantity: number) => {
+    // Ensure quantity is valid
+    if (newQuantity < 0.1) return;
+    
+    const updatedIngredients = [...ingredients];
+    updatedIngredients[index] = {
+      ...updatedIngredients[index],
+      quantity: newQuantity
+    };
+    
+    setIngredients(updatedIngredients);
+  };
+
+  // Update an ingredient's unit
+  const updateIngredientUnit = (index: number, newUnit: string) => {
+    const updatedIngredients = [...ingredients];
+    updatedIngredients[index] = {
+      ...updatedIngredients[index],
+      unit: newUnit
+    };
+    
+    setIngredients(updatedIngredients);
+  };
+  
+  // Handle quantity input change
+  const handleQuantityChange = (index: number, value: string) => {
+    const newQuantity = parseFloat(value);
+    if (!isNaN(newQuantity) && newQuantity >= 0.1) {
+      updateIngredientQuantity(index, newQuantity);
+    }
+  };
+
   // Add an instruction step
   const addInstructionStep = () => {
     setInstructions([...instructions, '']);
@@ -676,11 +709,68 @@ const RecipeForm = () => {
                       const food = foods?.find(f => f._id === ingredient.foodId);
                                             
                       return (
-                        <li key={index} className="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md">
-                          <div className="flex items-center">
-                            <span className="dark:text-gray-200 font-medium">
-                              {ingredient.quantity} {ingredient.unit}
-                            </span>
+                        <li key={index} className="flex flex-wrap justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md">
+                          <div className="flex flex-grow items-center">
+                            <div className="flex items-center mr-3">
+                              <button 
+                                type="button"
+                                className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                                onClick={() => updateIngredientQuantity(index, Math.max(0.1, ingredient.quantity - 1))}
+                                aria-label="Decrease quantity"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
+                              </button>
+                              
+                              <input
+                                type="number"
+                                value={ingredient.quantity}
+                                onChange={(e) => handleQuantityChange(index, e.target.value)}
+                                step="0.1"
+                                min="0.1"
+                                className="w-16 text-right form-input py-1 px-2 dark:bg-gray-700 dark:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                aria-label="Quantity"
+                              />
+                              
+                              <button 
+                                type="button"
+                                className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                                onClick={() => updateIngredientQuantity(index, ingredient.quantity + 1)}
+                                aria-label="Increase quantity"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+                              </button>
+                            </div>
+                            
+                            <div className="w-20 mr-2">
+                              <Select
+                                value={ingredient.unit}
+                                onChange={(e) => updateIngredientUnit(index, e.target.value)}
+                                aria-label="Unit"
+                                className="py-1 text-sm"
+                              >
+                                <optgroup label="Weight">
+                                  {unitCategories.weight.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="Volume">
+                                  {unitCategories.volume.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="Count">
+                                  {unitCategories.count.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </optgroup>
+                                <optgroup label="Descriptive">
+                                  {unitCategories.descriptive.map((unit) => (
+                                    <option key={unit} value={unit}>{unit}</option>
+                                  ))}
+                                </optgroup>
+                              </Select>
+                            </div>
+                            
                             <IngredientFoodName 
                               foodId={ingredient.foodId} 
                               foodFromList={food} 
@@ -690,6 +780,7 @@ const RecipeForm = () => {
                             type="button"
                             onClick={() => removeIngredient(index)}
                             className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+                            aria-label="Remove ingredient"
                           >
                             <span className="material-symbols-outlined text-sm">delete</span>
                           </button>
@@ -757,8 +848,9 @@ const RecipeForm = () => {
                     className="form-input"
                     value={newIngredient.quantity}
                     onChange={(e) => setNewIngredient({ ...newIngredient, quantity: parseFloat(e.target.value) })}
-                    min="0"
+                    min="0.1"
                     step="0.1"
+                    className="form-input [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
                 <div>
