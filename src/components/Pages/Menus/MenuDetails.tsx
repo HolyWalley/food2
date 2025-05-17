@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
 import menuService from '../../../services/menuService';
 import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
@@ -10,6 +11,9 @@ const MenuDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showCloneModal, setShowCloneModal] = useState(false);
+  const [cloneName, setCloneName] = useState('');
+  const cloneInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch menu data
   const { data: menu, isLoading: menuLoading, error: menuError } = useQuery({
@@ -59,6 +63,55 @@ const MenuDetails = () => {
     if (window.confirm('Are you sure you want to delete this menu?')) {
       deleteMutation.mutate({ id: menu._id, rev: menu._rev || '' });
     }
+  };
+
+  // Clone mutation
+  const cloneMutation = useMutation({
+    mutationFn: (clonedMenu: Omit<typeof menu, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => 
+      menuService.createMenu(clonedMenu),
+    onSuccess: async (newMenu) => {
+      queryClient.invalidateQueries({ queryKey: ['menus'] });
+      setShowCloneModal(false);
+      // Navigate to the newly created menu with view transition
+      await withViewTransition(() => {
+        navigate(`/menus/${newMenu._id}`);
+      });
+    },
+    onError: (error) => {
+      console.error('Error cloning menu:', error);
+      alert(`Error cloning menu: ${(error as Error).message}`);
+    }
+  });
+
+  // Handle clone button click
+  const handleCloneClick = () => {
+    if (!menu) return;
+    setCloneName(`${menu.name} (copy)`);
+    setShowCloneModal(true);
+    
+    // Focus the input field after the modal is shown
+    setTimeout(() => {
+      if (cloneInputRef.current) {
+        cloneInputRef.current.focus();
+        cloneInputRef.current.select();
+      }
+    }, 100);
+  };
+  
+  // Handle clone menu submission
+  const handleCloneMenu = () => {
+    if (!menu || !cloneName.trim()) return;
+    
+    // Create a new menu object based on the original menu
+    const clonedMenu = {
+      name: cloneName.trim(),
+      description: menu.description,
+      items: [...menu.items],
+      tags: menu.tags ? [...menu.tags] : undefined
+    };
+    
+    // Save the cloned menu
+    cloneMutation.mutate(clonedMenu);
   };
 
   // Get item name from ID
@@ -170,6 +223,13 @@ const MenuDetails = () => {
                     <span className="material-symbols-outlined mr-1">shopping_cart</span>
                     Shopping List
                   </Link>
+                  <button
+                    className="btn btn-secondary flex items-center"
+                    onClick={handleCloneClick}
+                  >
+                    <span className="material-symbols-outlined mr-1">content_copy</span>
+                    Clone
+                  </button>
                   <Link to={`/menus/${menu._id}/edit`} className="btn btn-secondary">
                     Edit
                   </Link>
@@ -368,6 +428,58 @@ const MenuDetails = () => {
           </div>
         </div>
       </div>
+      {/* Clone Menu Modal */}
+      {showCloneModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h2 className="text-xl font-semibold mb-4 dark:text-gray-200">Clone Menu</h2>
+            
+            <div className="mb-4">
+              <label htmlFor="cloneMenuName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                New Menu Name
+              </label>
+              <input
+                ref={cloneInputRef}
+                id="cloneMenuName"
+                type="text"
+                className="form-input w-full"
+                value={cloneName}
+                onChange={(e) => setCloneName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCloneMenu();
+                  if (e.key === 'Escape') setShowCloneModal(false);
+                }}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowCloneModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary flex items-center"
+                onClick={handleCloneMenu}
+                disabled={!cloneName.trim() || cloneMutation.isPending}
+              >
+                {cloneMutation.isPending ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin mr-1">progress_activity</span>
+                    Cloning...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined mr-1">content_copy</span>
+                    Clone
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
