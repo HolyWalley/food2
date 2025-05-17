@@ -112,9 +112,12 @@ const MenuDetails = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300">Menu Not Found</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">The menu you're looking for doesn't exist or has been deleted.</p>
-        <Link to="/menus" className="btn btn-primary mt-6">
-          Back to Menus
-        </Link>
+        <button 
+          onClick={() => navigate(-1)} 
+          className="btn btn-primary mt-6"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
@@ -123,19 +126,18 @@ const MenuDetails = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-6">
-        <Link 
-          to="/menus" 
-          onClick={async (e) => {
-            e.preventDefault();
+        <button 
+          onClick={async () => {
             await withViewTransition(() => {
-              navigate('/menus');
-            }, 'details-to-menu');
+              // Use browser history to navigate back
+              navigate(-1);
+            });
           }}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4 flex items-center"
         >
           <span className="material-symbols-outlined align-middle">arrow_back</span>
-          <span className="align-middle ml-1">Back to Menus</span>
-        </Link>
+          <span className="align-middle ml-1">Back</span>
+        </button>
       </div>
       
       {/* Grid layout to match the menu list for smoother transitions */}

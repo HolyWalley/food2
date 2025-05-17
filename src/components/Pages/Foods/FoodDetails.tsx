@@ -65,9 +65,12 @@ const FoodDetails = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300">Food Not Found</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">The food item you're looking for doesn't exist or has been deleted.</p>
-        <Link to="/foods" className="btn btn-primary mt-6">
-          Back to Foods
-        </Link>
+        <button 
+          onClick={() => navigate(-1)} 
+          className="btn btn-primary mt-6"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
@@ -75,19 +78,18 @@ const FoodDetails = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-6">
-        <Link 
-          to="/foods" 
-          onClick={async (e) => {
-            e.preventDefault();
+        <button 
+          onClick={async () => {
             await withViewTransition(() => {
-              navigate('/foods');
-            }, 'details-to-food');
+              // Use browser history to navigate back
+              navigate(-1);
+            });
           }}
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4 flex items-center"
         >
           <span className="material-symbols-outlined align-middle">arrow_back</span>
-          <span className="align-middle ml-1">Back to Foods</span>
-        </Link>
+          <span className="align-middle ml-1">Back</span>
+        </button>
       </div>
       
       {/* Grid layout to match the food list for smoother transitions */}

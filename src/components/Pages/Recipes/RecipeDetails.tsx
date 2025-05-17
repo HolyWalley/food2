@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import recipeService from '../../../services/recipeService';
 import foodService from '../../../services/foodService';
 import { type Food } from '../../../types';
+import { withViewTransition } from '../../../utils/viewTransition';
 
 const RecipeDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,10 +22,10 @@ const RecipeDetails = () => {
     queryKey: ['recipeIngredients', recipe?.ingredients.map(i => i.foodId)],
     queryFn: async () => {
       if (!recipe) return [];
-      
+
       // Get all foods needed for the ingredients
       const foods: Record<string, Food> = {};
-      
+
       for (const ingredient of recipe.ingredients) {
         try {
           const food = await foodService.getFoodById(ingredient.foodId);
@@ -33,7 +34,7 @@ const RecipeDetails = () => {
           console.error(`Failed to load food ${ingredient.foodId}:`, error);
         }
       }
-      
+
       return foods;
     },
     enabled: !!recipe
@@ -63,14 +64,14 @@ const RecipeDetails = () => {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (params: { id: string; rev: string }) => 
+    mutationFn: (params: { id: string; rev: string }) =>
       recipeService.deleteRecipe(params.id, params.rev),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       navigate('/recipes');
     }
   });
-  
+
   // Update servings mutation
   const updateServingsMutation = useMutation({
     mutationFn: (updatedRecipe: Recipe) => recipeService.updateRecipe(updatedRecipe),
@@ -83,7 +84,7 @@ const RecipeDetails = () => {
   // Handle delete
   const handleDelete = () => {
     if (!recipe) return;
-    
+
     if (window.confirm('Are you sure you want to delete this recipe?')) {
       deleteMutation.mutate({ id: recipe._id, rev: recipe._rev || '' });
     }
@@ -119,9 +120,12 @@ const RecipeDetails = () => {
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300">Recipe Not Found</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">The recipe you're looking for doesn't exist or has been deleted.</p>
-        <Link to="/recipes" className="btn btn-primary mt-6">
-          Back to Recipes
-        </Link>
+        <button
+          onClick={() => navigate(-1)}
+          className="btn btn-primary mt-6"
+        >
+          Go Back
+        </button>
       </div>
     );
   }
@@ -129,10 +133,18 @@ const RecipeDetails = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex items-center mb-6">
-        <Link to="/recipes" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4">
+        <button
+          onClick={async () => {
+            await withViewTransition(() => {
+              // Use browser history to navigate back
+              navigate(-1);
+            });
+          }}
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 mr-4 flex items-center"
+        >
           <span className="material-symbols-outlined align-middle">arrow_back</span>
-          <span className="align-middle ml-1">Back to Recipes</span>
-        </Link>
+          <span className="align-middle ml-1">Back</span>
+        </button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
@@ -141,12 +153,12 @@ const RecipeDetails = () => {
             <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">{recipe.name}</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-2">{recipe.description}</p>
           </div>
-          
+
           <div className="flex space-x-3 mt-4 md:mt-0">
             <Link to={`/recipes/${recipe._id}/edit`} className="btn btn-secondary">
               Edit
             </Link>
-            <button 
+            <button
               className="btn bg-red-500 text-white hover:bg-red-600"
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
@@ -160,11 +172,11 @@ const RecipeDetails = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="p-3 border border-gray-100 dark:border-gray-700 rounded text-center">
             <div className="flex items-center justify-center space-x-2">
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                   if (recipe.servings > 1) {
-                    const updatedRecipe = {...recipe, servings: recipe.servings - 1};
+                    const updatedRecipe = { ...recipe, servings: recipe.servings - 1 };
                     queryClient.setQueryData(['recipe', id], updatedRecipe);
                   }
                 }}
@@ -174,10 +186,10 @@ const RecipeDetails = () => {
                 <span className="material-symbols-outlined text-sm">remove</span>
               </button>
               <div className="text-sm font-semibold dark:text-gray-200">{recipe.servings}</div>
-              <button 
+              <button
                 type="button"
                 onClick={() => {
-                  const updatedRecipe = {...recipe, servings: recipe.servings + 1};
+                  const updatedRecipe = { ...recipe, servings: recipe.servings + 1 };
                   queryClient.setQueryData(['recipe', id], updatedRecipe);
                 }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -205,21 +217,21 @@ const RecipeDetails = () => {
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">Servings</div>
           </div>
-          
+
           {recipe.prepTime && (
             <div className="p-3 border border-gray-100 dark:border-gray-700 rounded text-center">
               <div className="text-sm font-semibold dark:text-gray-200">{recipe.prepTime} min</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Prep Time</div>
             </div>
           )}
-          
+
           {recipe.cookTime && (
             <div className="p-3 border border-gray-100 dark:border-gray-700 rounded text-center">
               <div className="text-sm font-semibold dark:text-gray-200">{recipe.cookTime} min</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Cook Time</div>
             </div>
           )}
-          
+
           {recipe.cookTime && recipe.prepTime && (
             <div className="p-3 border border-gray-100 dark:border-gray-700 rounded text-center">
               <div className="text-sm font-semibold dark:text-gray-200">{recipe.cookTime + recipe.prepTime} min</div>
@@ -256,7 +268,7 @@ const RecipeDetails = () => {
         {/* Nutritional Information */}
         <div className="mb-6">
           <h2 className="text-lg font-medium mb-3 text-gray-800 dark:text-gray-200">Nutritional Information (per serving)</h2>
-          
+
           {nutritionPerServingLoading && (
             <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg text-center">
               <div className="animate-pulse">
@@ -266,7 +278,7 @@ const RecipeDetails = () => {
               <p className="text-gray-500 dark:text-gray-400 mt-2">Calculating nutrition...</p>
             </div>
           )}
-          
+
           {nutritionPerServingError && (
             <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 p-4 rounded-lg">
               <p className="text-orange-700 dark:text-orange-300 font-medium">Unable to calculate nutrition</p>
@@ -274,7 +286,7 @@ const RecipeDetails = () => {
               <p className="text-orange-500 dark:text-orange-500 text-xs mt-2">Try editing the recipe with valid ingredients and units.</p>
             </div>
           )}
-          
+
           {!nutritionPerServingLoading && !nutritionPerServingError && nutritionPerServing && (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
