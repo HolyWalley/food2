@@ -1,0 +1,9 @@
+# Example .dev.vars file - copy to .dev.vars and fill in the values
+# This is used for local development with Wrangler
+
+# Nutritionix API credentials
+NUTRITIONIX_APP_ID=your_nutritionix_app_id
+NUTRITIONIX_API_KEY=your_nutritionix_api_key
+
+# OpenAI API credentials
+OPENAI_API_KEY=your_openai_api_key

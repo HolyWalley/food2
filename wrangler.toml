@@ -7,6 +7,11 @@ compatibility_date = "2025-05-17"
 # Environment variables (replace with actual values in production)
 [vars]
 ENVIRONMENT = "development"
+# Add empty values here, real values will be loaded from .dev.vars in development
+# and set in the Cloudflare dashboard for production
+NUTRITIONIX_APP_ID = ""
+NUTRITIONIX_API_KEY = ""
+OPENAI_API_KEY = ""
 
 # Configure KV Namespaces for the Workers
 [[kv_namespaces]]
