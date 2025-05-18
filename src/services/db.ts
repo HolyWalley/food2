@@ -24,8 +24,6 @@ const DB_NAME = 'food-planner';
 // Create a class for database operations
 class Database {
   private db: PouchDB.Database<AppDocument>;
-  private remoteDb: PouchDB.Database<AppDocument> | null = null;
-  private syncHandler: PouchDB.Replication.Sync<AppDocument> | null = null;
 
   constructor() {
     // Initialize local database
@@ -116,42 +114,6 @@ class Database {
     }
   }
 
-  // Configure remote database connection for sync
-  public setupRemoteSync(remoteUrl: string): void {
-    if (!remoteUrl) return;
-
-    try {
-      // Initialize remote database connection
-      this.remoteDb = new PouchDB<AppDocument>(remoteUrl);
-      
-      // Start bi-directional sync
-      this.syncHandler = this.db.sync(this.remoteDb, {
-        live: true,
-        retry: true
-      })
-      .on('change', (change) => {
-        console.log('Sync change:', change);
-      })
-      .on('error', (error) => {
-        console.error('Sync error:', error);
-      });
-
-      console.log('Remote sync configured successfully');
-    } catch (error) {
-      console.error('Failed to set up remote sync:', error);
-      this.remoteDb = null;
-      this.syncHandler = null;
-    }
-  }
-
-  // Stop syncing with remote database
-  public stopSync(): void {
-    if (this.syncHandler) {
-      this.syncHandler.cancel();
-      this.syncHandler = null;
-      console.log('Sync stopped');
-    }
-  }
 
   // Insert or update a document
   public async put<T extends AppDocument>(doc: T): Promise<T> {
