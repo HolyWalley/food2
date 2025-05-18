@@ -1,12 +1,17 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import StatusBar from './StatusBar';
 import ViewTransitionsInfo from './ViewTransitionsInfo';
 import { useDatabase } from '../../hooks/useDatabase';
+import useSyncOnAction from '../../hooks/useSyncOnAction';
 
 const Layout = () => {
   const { isLoading } = useDatabase();
+  const location = useLocation();
+  
+  // Use the hook to sync when navigation changes (pull changes from server)
+  useSyncOnAction([location.pathname], 'pull');
 
   if (isLoading) {
     return (

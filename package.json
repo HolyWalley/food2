@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "dev:functions": "npx wrangler pages dev --compatibility-date=2025-05-17 dist",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:functions\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:functions\" \"docker compose up\""
   },
   "dependencies": {
     "@tanstack/react-query": "^5.28.4",

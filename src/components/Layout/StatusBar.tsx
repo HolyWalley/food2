@@ -1,7 +1,19 @@
 import { useDatabase } from '../../hooks/useDatabase';
+import useAuth from '../../hooks/useAuth';
 
 const StatusBar = () => {
-  const { isOnline, isSyncing, syncError } = useDatabase();
+  const { isOnline, isSyncing, syncError, lastSync, syncNow } = useDatabase();
+  const { isAuthenticated } = useAuth();
+  
+  // Format the last sync time
+  const formattedLastSync = lastSync 
+    ? new Intl.DateTimeFormat('en-US', { 
+        hour: 'numeric', 
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true
+      }).format(lastSync)
+    : 'Never';
 
   return (
     <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-2 px-4">
@@ -17,6 +29,26 @@ const StatusBar = () => {
               {isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
+          
+          {isAuthenticated && (
+            <>
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <span className="mr-1">Last sync:</span>
+                <span>{formattedLastSync}</span>
+              </div>
+              
+              {isOnline && !isSyncing && (
+                <button 
+                  onClick={() => syncNow()}
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline flex items-center"
+                  disabled={isSyncing}
+                >
+                  <span className="material-symbols-outlined text-sm mr-1">sync</span>
+                  Sync now
+                </button>
+              )}
+            </>
+          )}
           
           {isSyncing && (
             <div className="flex items-center text-sm text-blue-600 dark:text-blue-400">
