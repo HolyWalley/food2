@@ -6,11 +6,13 @@ import foodService from '../../../services/foodService';
 import recipeService from '../../../services/recipeService';
 import { Select, PaginatedSelect } from '../../../components/UI';
 import type { MenuItem } from '../../../types';
+import useAuth from '../../../hooks/useAuth';
 
 const MenuForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const isEditing = !!id;
 
   // Form state
@@ -59,10 +61,11 @@ const MenuForm = () => {
       description,
       items,
       tags,
+      user_id: user.uuid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-  }, [name, description, items, tags]);
+  }, [name, description, items, tags, user.uuid]);
 
   // Calculate nutrition for the current menu items
   const { data: nutrition, isLoading: nutritionLoading } = useQuery({
@@ -111,6 +114,12 @@ const MenuForm = () => {
     e.preventDefault();
     setError(null);
 
+    // Ensure user is logged in
+    if (!user) {
+      setError('You must be logged in to create or edit menus');
+      return;
+    }
+
     // Validate form
     if (!name) {
       setError('Menu name is required');
@@ -139,6 +148,7 @@ const MenuForm = () => {
           description,
           items,
           tags,
+          user_id: existingMenu.user_id || user.uuid,
           updatedAt: new Date().toISOString()
         });
       } else {
@@ -146,7 +156,8 @@ const MenuForm = () => {
           name,
           description,
           items,
-          tags
+          tags,
+          user_id: user.uuid
         });
       }
     } catch (error) {

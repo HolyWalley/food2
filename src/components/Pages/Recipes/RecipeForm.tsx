@@ -6,6 +6,7 @@ import foodService from '../../../services/foodService';
 import { Select, PaginatedSelect } from '../../../components/UI';
 import { unitCategories } from '../../../utils/nutritionixUtils';
 import type { Recipe, RecipeIngredient, Food } from '../../../types';
+import useAuth from '../../../hooks/useAuth';
 // We don't use uuidv4 directly in this component
 // import { v4 as uuidv4 } from 'uuid';
 
@@ -151,6 +152,7 @@ const RecipeForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const isEditMode = !!id;
 
   // Form state
@@ -180,6 +182,7 @@ const RecipeForm = () => {
         prepTime,
         cookTime,
         tags,
+        user_id: user.uuid,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -561,6 +564,12 @@ const RecipeForm = () => {
       tags: tags?.length || 0
     });
 
+    // Ensure user is logged in
+    if (!user) {
+      setError('You must be logged in to create or edit recipes');
+      return;
+    }
+
     // Form validation
     if (!name.trim()) {
       setError('Name is required');
@@ -611,6 +620,7 @@ const RecipeForm = () => {
         prepTime,
         cookTime,
         tags: tags.length > 0 ? tags : undefined,
+        user_id: recipeData.user_id || user.uuid,
         updatedAt: new Date().toISOString()
       };
       updateMutation.mutate(updatedRecipe);
@@ -624,7 +634,8 @@ const RecipeForm = () => {
         instructions: instructions.filter(step => step.trim()),
         prepTime,
         cookTime,
-        tags: tags.length > 0 ? tags : undefined
+        tags: tags.length > 0 ? tags : undefined,
+        user_id: user.uuid
       };
       createMutation.mutate(newRecipe);
     }

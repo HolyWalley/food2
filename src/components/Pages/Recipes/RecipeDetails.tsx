@@ -378,6 +378,11 @@ const RecipeDetails = () => {
               <p className="font-mono text-sm dark:text-gray-300">{recipe._rev}</p>
             </div>
           )}
+
+          <div>
+            <span className="text-gray-500 dark:text-gray-400 text-sm">User ID</span>
+            <p className="font-mono text-sm dark:text-gray-300">{recipe.user_id}</p>
+          </div>
         </div>
       </div>
     </div>

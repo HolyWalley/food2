@@ -59,6 +59,7 @@ export interface Recipe extends BaseDocument {
   ingredients: RecipeIngredient[];
   instructions: string[];
   servings: number;
+  user_id: string;
   prepTime?: number; // minutes
   cookTime?: number; // minutes
   tags?: string[];
@@ -78,6 +79,7 @@ export interface Menu extends BaseDocument {
   name: string;
   description: string;
   items: MenuItem[];
+  user_id: string;
   tags?: string[];
 }
 
