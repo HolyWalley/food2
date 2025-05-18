@@ -71,6 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
 
     try {
+      // First create user account
       const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: 'POST',
         headers: {
@@ -86,7 +87,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(data.error || 'Signup failed');
       }
 
-      setUser(data.user);
+      // After successful signup, automatically log in the user
+      // This helps password managers recognize and save the credentials
+      const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include',
+      });
+
+      if (!loginResponse.ok) {
+        // If login fails after signup, still consider signup successful
+        console.warn('Auto-login after signup failed, but signup succeeded');
+        setUser(data.user);
+      } else {
+        const loginData = await loginResponse.json();
+        setUser(loginData.user);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
       throw err;
