@@ -51,7 +51,7 @@ export async function createUser(USER_AUTH, username, password) {
 
   // Hash password
   const hashedPassword = await hashPassword(password);
-  
+
   // Generate a UUID for the user
   const uuid = uuidv4();
 
@@ -66,7 +66,7 @@ export async function createUser(USER_AUTH, username, password) {
 
   // Save to KV
   await USER_AUTH.put(username, JSON.stringify(user));
-  
+
   // Return user without sensitive information
   const { hashedPassword: _, ...safeUser } = user;
   return safeUser;
@@ -106,21 +106,21 @@ export async function hashValue(value) {
  * @returns {Promise<string>} - The JWT token
  */
 export async function createJwtToken(user, request, env) {
-  const ip = request.headers.get('CF-Connecting-IP') || 
-            request.headers.get('X-Forwarded-For') || 
-            '127.0.0.1';
-  
+  const ip = request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For') ||
+    '127.0.0.1';
+
   const userAgent = request.headers.get('User-Agent') || '';
   const timezone = request.headers.get('Timezone') || 'UTC';
-  
+
   // Hash the first 16 bits of the IP
   const ipParts = ip.split('.');
   const firstTwoOctets = ipParts.slice(0, 2).join('.');
   const hashedIp = await hashValue(firstTwoOctets);
-  
+
   // Hash the user agent
   const hashedUserAgent = await hashValue(userAgent);
-  
+
   const payload = {
     sub: user.uuid,
     username: user.username,
@@ -128,7 +128,7 @@ export async function createJwtToken(user, request, env) {
     ua: hashedUserAgent,
     tz: timezone
   };
-  
+
   // Create JWT using jose
   const secret = new TextEncoder().encode(env.JWT_SECRET);
   const jwt = await new jose.SignJWT(payload)
@@ -136,7 +136,7 @@ export async function createJwtToken(user, request, env) {
     .setIssuedAt()
     .setExpirationTime('7d')
     .sign(secret);
-  
+
   return jwt;
 }
 
@@ -149,11 +149,11 @@ export async function createJwtToken(user, request, env) {
  */
 export function setAuthCookie(response, token, env) {
   let cookieValue = `${env.COOKIE_NAME}=${token}; HttpOnly; Path=/; Max-Age=${7 * 24 * 60 * 60}; SameSite=Strict`;
-  
+
   if (env.ENVIRONMENT !== 'development') {
     cookieValue += '; Secure';
   }
-  
+
   response.headers.set('Set-Cookie', cookieValue);
   return response;
 }
@@ -166,11 +166,11 @@ export function setAuthCookie(response, token, env) {
  */
 export function clearAuthCookie(response, env) {
   let cookieValue = `${env.COOKIE_NAME}=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict`;
-  
+
   if (env.ENVIRONMENT !== 'development') {
     cookieValue += '; Secure';
   }
-  
+
   response.headers.set('Set-Cookie', cookieValue);
   return response;
 }
@@ -188,33 +188,33 @@ export async function verifyJwtToken(token, request, env) {
     // Verify token signature
     const secret = new TextEncoder().encode(env.JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secret);
-    
+
     // Verify authentication factors
-    const ip = request.headers.get('CF-Connecting-IP') || 
-               request.headers.get('X-Forwarded-For') || 
-               '127.0.0.1';
-               
+    const ip = request.headers.get('CF-Connecting-IP') ||
+      request.headers.get('X-Forwarded-For') ||
+      '127.0.0.1';
+
     const userAgent = request.headers.get('User-Agent') || '';
     const timezone = request.headers.get('Timezone') || 'UTC';
-    
+
     // Hash factors for comparison
     const ipParts = ip.split('.');
     const firstTwoOctets = ipParts.slice(0, 2).join('.');
     const hashedIp = await hashValue(firstTwoOctets);
     const hashedUserAgent = await hashValue(userAgent);
-    
+
     // Check authentication factors
     let factorsMismatched = 0;
-    
+
     if (hashedIp !== payload.ip) factorsMismatched++;
     if (hashedUserAgent !== payload.ua) factorsMismatched++;
     if (timezone !== payload.tz) factorsMismatched++;
-    
+
     // If 2 or more factors don't match, invalidate the token
     if (factorsMismatched >= 2) {
       throw new Error('Authentication factors validation failed');
     }
-    
+
     return payload;
   } catch (error) {
     throw new Error(`Invalid token: ${error.message}`);
@@ -224,9 +224,10 @@ export async function verifyJwtToken(token, request, env) {
 /**
  * Extract JWT token from cookies
  * @param {Object} request - The request object
+ * @param {Object} env - The environment variables object
  * @returns {string|null} - The JWT token or null if not found
  */
-export function getJwtTokenFromRequest(request) {
+export function getJwtTokenFromRequest(request, env) {
   const cookieHeader = request.headers.get('Cookie') || '';
   const cookies = Object.fromEntries(
     cookieHeader.split('; ').map(c => {
@@ -234,6 +235,6 @@ export function getJwtTokenFromRequest(request) {
       return [name, value.join('=')];
     })
   );
-  
-  return cookies[process.env.COOKIE_NAME] || null;
+
+  return cookies[env.COOKIE_NAME] || null;
 }

@@ -4,8 +4,8 @@
  * @returns {Response} - The response with user info
  */
 export async function onRequest(context) {
-  const { request, user } = context;
-  
+  const { request, data: { user } } = context;
+
   // Only allow GET requests
   if (request.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {

@@ -6,7 +6,7 @@ import { getJwtTokenFromRequest, verifyJwtToken, clearAuthCookie } from './utils
  */
 export async function onRequest(context) {
   const { request, env, next } = context;
-  
+
   // Define public paths that don't require authentication
   const PUBLIC_PATHS = [
     '/api/health',
@@ -37,8 +37,8 @@ export async function onRequest(context) {
   if (!PUBLIC_PATHS.some(publicPath => path.startsWith(publicPath))) {
     try {
       // Get token from request
-      const token = getJwtTokenFromRequest(request);
-      
+      const token = getJwtTokenFromRequest(request, env);
+
       if (!token) {
         const response = new Response(
           JSON.stringify({ error: 'Authentication required' }),
@@ -52,12 +52,12 @@ export async function onRequest(context) {
         );
         return response;
       }
-      
+
       // Verify token and authentication factors
       const decodedToken = await verifyJwtToken(token, request, env);
-      
+
       // Add user info to context for downstream handlers
-      context.user = {
+      context.data.user = {
         uuid: decodedToken.sub,
         username: decodedToken.username
       };
@@ -73,14 +73,14 @@ export async function onRequest(context) {
           }
         }
       );
-      
+
       return clearAuthCookie(response, env);
     }
   }
 
   // Process the request through the next handler
   const response = await next();
-  
+
   // Add CORS headers to the response
   Object.entries(corsHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
