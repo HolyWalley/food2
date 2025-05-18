@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Context Providers
@@ -26,6 +26,11 @@ import MenuDetails from './components/Pages/Menus/MenuDetails';
 import MenuForm from './components/Pages/Menus/MenuForm';
 import ShoppingList from './components/Pages/Menus/ShoppingList';
 
+// Auth components
+import Login from './components/Pages/Auth/Login';
+import Signup from './components/Pages/Auth/Signup';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+
 // Create a query client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,39 +50,49 @@ function App() {
         <ThemeProvider>
           <Router>
             <Routes>
-              <Route path="/" element={<Layout />}>
-              {/* Dashboard */}
-              <Route index element={<Dashboard />} />
+              {/* Auth Routes - Public */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               
-              {/* Food Routes */}
-              <Route path="foods">
-                <Route index element={<FoodsList />} />
-                <Route path="new" element={<FoodForm />} />
-                <Route path=":id" element={<FoodDetails />} />
-                <Route path=":id/edit" element={<FoodForm />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Layout />}>
+                  {/* Dashboard */}
+                  <Route index element={<Dashboard />} />
+                  
+                  {/* Food Routes */}
+                  <Route path="foods">
+                    <Route index element={<FoodsList />} />
+                    <Route path="new" element={<FoodForm />} />
+                    <Route path=":id" element={<FoodDetails />} />
+                    <Route path=":id/edit" element={<FoodForm />} />
+                  </Route>
+                  
+                  {/* Recipe Routes */}
+                  <Route path="recipes">
+                    <Route index element={<RecipesList />} />
+                    <Route path="new" element={<RecipeForm />} />
+                    <Route path=":id" element={<RecipeDetails />} />
+                    <Route path=":id/edit" element={<RecipeForm />} />
+                  </Route>
+                  
+                  {/* Menu Routes */}
+                  <Route path="menus">
+                    <Route index element={<MenusList />} />
+                    <Route path="new" element={<MenuForm />} />
+                    <Route path=":id" element={<MenuDetails />} />
+                    <Route path=":id/edit" element={<MenuForm />} />
+                    <Route path=":id/shopping-list" element={<ShoppingList />} />
+                  </Route>
+                  
+                  {/* 404 Not Found */}
+                  <Route path="*" element={<NotFound />} />
+                </Route>
               </Route>
               
-              {/* Recipe Routes */}
-              <Route path="recipes">
-                <Route index element={<RecipesList />} />
-                <Route path="new" element={<RecipeForm />} />
-                <Route path=":id" element={<RecipeDetails />} />
-                <Route path=":id/edit" element={<RecipeForm />} />
-              </Route>
-              
-              {/* Menu Routes */}
-              <Route path="menus">
-                <Route index element={<MenusList />} />
-                <Route path="new" element={<MenuForm />} />
-                <Route path=":id" element={<MenuDetails />} />
-                <Route path=":id/edit" element={<MenuForm />} />
-                <Route path=":id/shopping-list" element={<ShoppingList />} />
-              </Route>
-              
-              {/* 404 Not Found */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
+              {/* Catch-all redirect to login */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
           </Router>
         </ThemeProvider>
       </DatabaseProvider>

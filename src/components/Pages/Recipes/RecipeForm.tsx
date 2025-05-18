@@ -24,10 +24,10 @@ const IngredientFoodName = ({ foodId, foodFromList }: { foodId: string, foodFrom
   return (
     <>
       <span className="ml-1 dark:text-gray-300">
-        {foodToDisplay ? 
-          `of ${foodToDisplay.name}` : 
-          (isLoading ? 
-            <span className="text-gray-400 italic">Loading food...</span> : 
+        {foodToDisplay ?
+          `of ${foodToDisplay.name}` :
+          (isLoading ?
+            <span className="text-gray-400 italic">Loading food...</span> :
             <span className="text-red-400 italic">Food not found</span>)
         }
       </span>
@@ -48,38 +48,38 @@ function findBestFoodMatch(existingFoods: Food[], newFood: Record<string, unknow
   // Lower threshold means easier matching
   const SIMILARITY_THRESHOLD = 0.7;  // 70% similarity required for a match
   const NUTRIENT_MATCH_BOOST = 0.2;  // Boost score by 20% if nutrients match closely
-  
+
   if (!existingFoods || existingFoods.length === 0) {
     return null;
   }
-  
+
   let bestMatch: Food | null = null;
   let highestScore = 0;
-  
+
   for (const food of existingFoods) {
     // 1. Calculate name similarity (case insensitive)
     const existingName = food.name.toLowerCase();
     const newName = newFood.name.toLowerCase();
-    
+
     // Check for exact match on nutritionixId first if available
-    if (food.nutritionixId && newFood.nutritionixId && 
-        food.nutritionixId.toLowerCase() === newFood.nutritionixId.toLowerCase()) {
+    if (food.nutritionixId && newFood.nutritionixId &&
+      food.nutritionixId.toLowerCase() === newFood.nutritionixId.toLowerCase()) {
       // Direct match on nutritionixId is a perfect match
       return food; // Immediate return with a perfect match
     }
-    
+
     // Check commonName if available (fuzzy match)
-    if (food.commonName && newFood.commonName && 
-        food.commonName.toLowerCase() === newFood.commonName.toLowerCase()) {
+    if (food.commonName && newFood.commonName &&
+      food.commonName.toLowerCase() === newFood.commonName.toLowerCase()) {
       // Direct match on commonName is almost a perfect match
       return food; // Immediate return with a very good match
     }
-    
+
     // Define stopwords to ignore in food name comparison
     const stopwords = new Set(['and', 'or', 'the', 'a', 'an', 'of', 'in', 'with', 'without',
-                               'fresh', 'frozen', 'raw', 'cooked', 'sliced', 'chopped', 'diced',
-                               'minced', 'grated', 'shredded', 'whole', 'cut', 'pieces']);
-                               
+      'fresh', 'frozen', 'raw', 'cooked', 'sliced', 'chopped', 'diced',
+      'minced', 'grated', 'shredded', 'whole', 'cut', 'pieces']);
+
     // Normalize and tokenize names, removing stopwords
     const normalizeAndTokenize = (name: string): string[] => {
       return name.toLowerCase()
@@ -87,24 +87,24 @@ function findBestFoodMatch(existingFoods: Food[], newFood: Record<string, unknow
         .split(/\s+/)
         .filter(word => word.length > 1 && !stopwords.has(word));
     };
-    
+
     // Get normalized words for both food names
     const existingWords = new Set(normalizeAndTokenize(existingName));
     const newWords = new Set(normalizeAndTokenize(newName));
-    
+
     // Check for direct name match after normalization
-    if (existingWords.size === newWords.size && 
-        [...existingWords].every(word => newWords.has(word))) {
+    if (existingWords.size === newWords.size &&
+      [...existingWords].every(word => newWords.has(word))) {
       return food; // Direct match after normalization
     }
-    
+
     // Calculate intersection and union for Jaccard similarity
     const intersection = new Set([...existingWords].filter(word => newWords.has(word)));
     const union = new Set([...existingWords, ...newWords]);
-    
+
     // Name similarity score (Jaccard index)
     let similarityScore = intersection.size / union.size;
-    
+
     // 2. Check if nutrient profiles are similar (within 10% of each other)
     const nutrientsSimilar = (
       isNutrientSimilar(food.nutrients.calories, newFood.nutrients.calories, 0.1) &&
@@ -112,24 +112,24 @@ function findBestFoodMatch(existingFoods: Food[], newFood: Record<string, unknow
       isNutrientSimilar(food.nutrients.carbs, newFood.nutrients.carbs, 0.1) &&
       isNutrientSimilar(food.nutrients.fat, newFood.nutrients.fat, 0.1)
     );
-    
+
     // Boost score if nutrients are similar
     if (nutrientsSimilar) {
       similarityScore += NUTRIENT_MATCH_BOOST;
     }
-    
+
     // 3. Check if category matches and boost score
     if (food.category.toLowerCase() === newFood.category.toLowerCase()) {
       similarityScore += 0.1; // Boost by 10% for matching category
     }
-    
+
     // Update best match if this is the highest score so far
     if (similarityScore > highestScore && similarityScore >= SIMILARITY_THRESHOLD) {
       highestScore = similarityScore;
       bestMatch = food;
     }
   }
-  
+
   return bestMatch;
 }
 
@@ -140,10 +140,10 @@ function isNutrientSimilar(value1: number, value2: number, tolerance: number): b
   if (value1 === 0 && value2 === 0) {
     return true;
   }
-  
+
   const max = Math.max(value1, value2);
   const min = Math.min(value1, value2);
-  
+
   return (max - min) / max <= tolerance;
 }
 
@@ -167,7 +167,7 @@ const RecipeForm = () => {
     queryKey: ['recipeNutrition', ingredients],
     queryFn: () => {
       if (ingredients.length === 0) return Promise.resolve(null);
-      
+
       // Create a temporary recipe object for nutrition calculation
       const tempRecipe = {
         _id: 'temp_recipe',
@@ -183,16 +183,16 @@ const RecipeForm = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
+
       return recipeService.calculateRecipeNutrition(tempRecipe);
     },
     enabled: ingredients.length > 0
   });
-  
+
   // Calculate per-serving nutrition
   const perServingNutrition = useMemo(() => {
     if (!nutrition || servings <= 0) return null;
-    
+
     return {
       calories: Math.round(nutrition.calories / servings),
       protein: parseFloat((nutrition.protein / servings).toFixed(1)),
@@ -230,14 +230,14 @@ const RecipeForm = () => {
     queryKey: ['foods'],
     queryFn: foodService.getAllFoods
   });
-  
+
   // Fetch specific foods for ingredients if they aren't in the main foods list
   useEffect(() => {
     if (ingredients.length > 0 && foods) {
       const missingFoodIds = ingredients
         .map(ingredient => ingredient.foodId)
         .filter(foodId => !foods.some(food => food._id === foodId));
-      
+
       // Fetch each missing food
       missingFoodIds.forEach(foodId => {
         queryClient.prefetchQuery({
@@ -327,7 +327,7 @@ const RecipeForm = () => {
 
     // Clear any previous errors
     setError(null);
-    
+
     const updatedIngredients = [...ingredients, { ...newIngredient }];
     setIngredients(updatedIngredients);
 
@@ -337,7 +337,7 @@ const RecipeForm = () => {
       quantity: 1,
       unit: 'g'
     });
-    
+
     // Force refresh of nutrition data
     queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
@@ -345,7 +345,7 @@ const RecipeForm = () => {
   // Remove an ingredient
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
-    
+
     // Force refresh of nutrition data
     queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
@@ -354,15 +354,15 @@ const RecipeForm = () => {
   const updateIngredientQuantity = (index: number, newQuantity: number) => {
     // Ensure quantity is valid
     if (newQuantity < 0.1) return;
-    
+
     const updatedIngredients = [...ingredients];
     updatedIngredients[index] = {
       ...updatedIngredients[index],
       quantity: newQuantity
     };
-    
+
     setIngredients(updatedIngredients);
-    
+
     // Force refresh of nutrition data
     queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
@@ -374,13 +374,13 @@ const RecipeForm = () => {
       ...updatedIngredients[index],
       unit: newUnit
     };
-    
+
     setIngredients(updatedIngredients);
-    
+
     // Force refresh of nutrition data
     queryClient.invalidateQueries({ queryKey: ['recipeNutrition'] });
   };
-  
+
   // Handle quantity input change
   const handleQuantityChange = (index: number, value: string) => {
     const newQuantity = parseFloat(value);
@@ -448,7 +448,7 @@ const RecipeForm = () => {
             const existingFoods = await foodService.getAllFoods();
             let foodId = '';
             let foodDetails = null;
-            
+
             // Check if we have a Nutritionix ID match (nix_item_id has priority)
             let nutritionixIdMatch = null;
             if (processedIngredient.food.nixItemId) {
@@ -456,10 +456,10 @@ const RecipeForm = () => {
                 f => f.nixItemId === processedIngredient.food.nixItemId
               );
             }
-            
+
             // Find the best matching food using a similarity score
             const foodMatch = findBestFoodMatch(existingFoods, processedIngredient.food);
-            
+
             // Use either the nutritionix match or best name match
             if (nutritionixIdMatch) {
               foodId = nutritionixIdMatch._id;
@@ -472,7 +472,7 @@ const RecipeForm = () => {
             } else {
               // Create a new food item
               console.log(`Creating new food: ${processedIngredient.food.name}`);
-              
+
               const newFood = await foodService.createFood({
                 name: processedIngredient.food.name,
                 category: processedIngredient.food.category,
@@ -486,15 +486,15 @@ const RecipeForm = () => {
                 ndbNumber: processedIngredient.food.ndbNumber,
                 altMeasures: processedIngredient.food.altMeasures
               });
-              
+
               foodId = newFood._id;
               foodDetails = newFood;
               console.log(`Created new food with ID: ${foodId}`);
-              
+
               // Add the new food to the query cache so it's immediately available
               queryClient.setQueryData(['food', foodId], foodDetails);
             }
-            
+
             // Return the ingredient with the correct food ID
             return {
               foodId,
@@ -506,16 +506,16 @@ const RecipeForm = () => {
             return null;
           }
         });
-        
+
         // Wait for all ingredient processing to complete
         const processedIngredients = await Promise.all(ingredientPromises);
-        
+
         // Filter out any null values (errors)
         const validIngredients = processedIngredients.filter(ingredient => ingredient !== null) as RecipeIngredient[];
-        
+
         console.log('Setting ingredients:', validIngredients);
         setIngredients(validIngredients);
-        
+
         // Invalidate the foods query to ensure the list gets refreshed
         queryClient.invalidateQueries({ queryKey: ['foods'] });
       }
@@ -535,13 +535,13 @@ const RecipeForm = () => {
       setError('Please enter a recipe name or description to generate from');
       return;
     }
-    
+
     setIsGenerating(true);
     setError(null);
-    
+
     // Store the current name to use as a prompt
     const prompt = name;
-    
+
     // Call the API with the name as the prompt
     generateRecipeMutation.mutate(prompt);
   };
@@ -829,7 +829,7 @@ const RecipeForm = () => {
               </div>
             )}
           </div>
-          
+
           {/* Ingredients */}
           <div>
             <h2 className="text-lg font-medium mb-4 dark:text-gray-200">Ingredients</h2>
@@ -843,12 +843,12 @@ const RecipeForm = () => {
                     {ingredients.map((ingredient, index) => {
                       // Try to find food in the global foods list first
                       const food = foods?.find(f => f._id === ingredient.foodId);
-                                            
+
                       return (
                         <li key={index} className="flex flex-wrap justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-md">
                           <div className="flex flex-grow items-center">
                             <div className="flex items-center mr-3">
-                              <button 
+                              <button
                                 type="button"
                                 className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
                                 onClick={() => updateIngredientQuantity(index, Math.max(0.1, ingredient.quantity - 1))}
@@ -856,7 +856,7 @@ const RecipeForm = () => {
                               >
                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>remove</span>
                               </button>
-                              
+
                               <input
                                 type="number"
                                 value={ingredient.quantity}
@@ -866,8 +866,8 @@ const RecipeForm = () => {
                                 className="w-16 text-right form-input py-1 px-2 dark:bg-gray-700 dark:text-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 aria-label="Quantity"
                               />
-                              
-                              <button 
+
+                              <button
                                 type="button"
                                 className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
                                 onClick={() => updateIngredientQuantity(index, ingredient.quantity + 1)}
@@ -876,7 +876,7 @@ const RecipeForm = () => {
                                 <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                               </button>
                             </div>
-                            
+
                             <div className="w-20 mr-2">
                               <Select
                                 value={ingredient.unit}
@@ -906,10 +906,10 @@ const RecipeForm = () => {
                                 </optgroup>
                               </Select>
                             </div>
-                            
-                            <IngredientFoodName 
-                              foodId={ingredient.foodId} 
-                              foodFromList={food} 
+
+                            <IngredientFoodName
+                              foodId={ingredient.foodId}
+                              foodFromList={food}
                             />
                           </div>
                           <button
@@ -981,7 +981,6 @@ const RecipeForm = () => {
                   <input
                     id="quantity"
                     type="number"
-                    className="form-input"
                     value={newIngredient.quantity}
                     onChange={(e) => setNewIngredient({ ...newIngredient, quantity: parseFloat(e.target.value) })}
                     min="0.1"

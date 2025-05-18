@@ -1,10 +1,22 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from '../../hooks/useTheme';
+import useAuth from '../../hooks/useAuth';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { darkMode, toggleDarkMode } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-sm">
@@ -46,7 +58,7 @@ const Navbar = () => {
             </Link>
             <button
               onClick={toggleDarkMode}
-              className="ml-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center"
+              className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center"
               aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {darkMode ? (
@@ -65,6 +77,20 @@ const Navbar = () => {
                 </>
               )}
             </button>
+            
+            {user && (
+              <div className="flex items-center ml-4">
+                <span className="text-sm text-gray-700 dark:text-gray-300 mr-2">
+                  {user.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -167,6 +193,23 @@ const Navbar = () => {
               </>
             )}
           </button>
+          
+          {user && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+              <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                Signed in as <span className="font-medium">{user.username}</span>
+              </div>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-white bg-red-600 hover:bg-red-700"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

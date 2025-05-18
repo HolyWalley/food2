@@ -5,11 +5,11 @@ compatibility_date = "2025-05-17"
 
 # Using Cloudflare Pages Functions
 [build]
-command = "echo 'No build needed for functions-only deployment'"
+command = "npm run build"
 
 # Functions configuration
-[functions]
-directory = "functions"
+[site]
+bucket = "dist"
 
 # Environment variables (replace with actual values in production)
 [vars]
@@ -19,12 +19,19 @@ ENVIRONMENT = "development"
 NUTRITIONIX_APP_ID = ""
 NUTRITIONIX_API_KEY = ""
 OPENAI_API_KEY = ""
+JWT_SECRET = ""
+COOKIE_NAME = "food_plan_auth"
 
 # Configure KV Namespaces for the Workers
 [[kv_namespaces]]
 binding = "FOOD_CACHE"
 id = "827d95bee0d84beca2fef6badd4ac3b1"
 preview_id = "0016d5076d8b4ce9bb33447b06b9d6ac"
+
+[[kv_namespaces]]
+binding = "USER_AUTH"
+id = "08caec788f414ddca083f7d58eafa629"
+preview_id = "3639632188df4a5cabf3316c6768a5d9"
 
 # Configure dev build for local development testing
 [dev]
